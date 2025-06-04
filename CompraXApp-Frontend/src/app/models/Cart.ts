@@ -1,8 +1,18 @@
-import { CartItem } from "./CartItem";
+export interface CartItem {
+  id?: number;
+  productId: number;
+  productName: string;
+  pricePerUnit: number;  
+  quantity: number;
+  imageUrl?: string;
+  subtotal?: number;     
+}
 
 export interface Cart {
-  id?: number; 
+  id?: number;
   userId?: number;
   items: CartItem[];
-  totalPrice?: number;
+  totalAmount: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 }

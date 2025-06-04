@@ -1,1 +1,230 @@
-<p>product-list works!</p>
+<div class="products-page">
+  <!-- Hero Section -->
+  <div class="hero-section">
+    <div class="hero-content">
+      <h1 class="hero-title">Discover Amazing Products</h1>
+      <p class="hero-subtitle">Find everything you need in our curated collection</p>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filters-header">
+      <h2>Browse Products</h2>
+      <div class="view-toggle">
+        <button 
+          class="view-btn" 
+          [class.active]="viewMode === 'grid'"
+          (click)="setViewMode('grid')">
+          📊 Grid
+        </button>
+        <button 
+          class="view-btn" 
+          [class.active]="viewMode === 'list'"
+          (click)="setViewMode('list')">
+          📋 List
+        </button>
+      </div>
+    </div>
+    
+    <div class="filters-controls">
+      <div class="search-filter">
+        <input 
+          type="text" 
+          [(ngModel)]="searchKeyword"
+          (input)="onSearch()"
+          (keyup.enter)="onSearch()"
+          placeholder="Search products..."
+          class="form-input search-input">
+        <span class="search-icon">🔍</span>
+      </div>
+      
+      <div class="price-filters">
+        <input 
+          type="number" 
+          [(ngModel)]="minPrice"
+          (input)="onPriceChange()"
+          (blur)="onPriceChange()"
+          placeholder="Min price"
+          class="form-input price-input"
+          min="0"
+          step="0.01">
+        <span class="price-separator">-</span>
+        <input 
+          type="number" 
+          [(ngModel)]="maxPrice"
+          (input)="onPriceChange()"
+          (blur)="onPriceChange()"
+          placeholder="Max price"
+          class="form-input price-input"
+          min="0"
+          step="0.01">
+      </div>
+      
+      <button 
+        (click)="clearFilters()" 
+        class="btn btn-outline btn-sm clear-filters-btn"
+        [disabled]="!searchKeyword && !minPrice && !maxPrice">
+        🗑️ Clear Filters
+      </button>
+    </div>
+    
+    <!-- Results Count -->
+    <div class="results-info" *ngIf="!isLoading">
+      <span class="results-count">
+        {{ products.length }} product{{ products.length !== 1 ? 's' : '' }} found
+        <span *ngIf="searchKeyword || minPrice || maxPrice" class="filter-indicator">
+          (filtered)
+        </span>
+      </span>
+      
+      <!-- Active Filters -->
+      <div class="active-filters" *ngIf="searchKeyword || minPrice || maxPrice">
+        <span class="filter-label">Active filters:</span>
+        <span *ngIf="searchKeyword" class="filter-tag">
+          Search: "{{ searchKeyword }}"
+          <button (click)="searchKeyword = ''; filterProducts()" class="remove-filter">×</button>
+        </span>
+        <span *ngIf="minPrice" class="filter-tag">
+          Min: ${{ minPrice }}
+          <button (click)="minPrice = undefined; filterProducts()" class="remove-filter">×</button>
+        </span>
+        <span *ngIf="maxPrice" class="filter-tag">
+          Max: ${{ maxPrice }}
+          <button (click)="maxPrice = undefined; filterProducts()" class="remove-filter">×</button>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading">
+    <div class="spinner"></div>
+    <span>Loading amazing products...</span>
+  </div>
+
+  <!-- No Products -->
+  <div *ngIf="!isLoading && products.length === 0" class="empty-state">
+    <div class="empty-content">
+      <div class="empty-icon">🛍️</div>
+      <h3>No products found</h3>
+      <p *ngIf="searchKeyword || minPrice || maxPrice">
+        No products match your current filters. Try adjusting your search criteria.
+      </p>
+      <p *ngIf="!searchKeyword && !minPrice && !maxPrice">
+        No products available at the moment. Check back later!
+      </p>
+      <button 
+        *ngIf="searchKeyword || minPrice || maxPrice"
+        (click)="clearFilters()" 
+        class="btn btn-primary">
+        Clear Filters & View All
+      </button>
+    </div>
+  </div>
+
+  <!-- Products Grid/List -->
+  <div *ngIf="!isLoading && products.length > 0" 
+       class="products-container"
+       [class.grid-view]="viewMode === 'grid'"
+       [class.list-view]="viewMode === 'list'">
+    
+    <div *ngFor="let product of products; trackBy: trackByProductId" 
+         class="product-item fade-in">
+      
+      <!-- Grid View Card -->
+      <div *ngIf="viewMode === 'grid'" class="product-card">
+        <div class="product-image-container">
+          <img 
+            [src]="product.imageUrl || 'assets/default-product.png'" 
+            [alt]="product.name" 
+            class="product-image"
+            (error)="onImageError($event)">
+          <div class="product-overlay">
+            <button 
+              (click)="viewProduct(product)"
+              class="btn btn-primary btn-sm">
+              Quick View
+            </button>
+          </div>
+        </div>
+        
+        <div class="product-info">
+          <h3 class="product-name">{{ product.name }}</h3>
+          <p class="product-description">
+            {{ product.description | slice:0:80 }}{{ product.description.length > 80 ? '...' : '' }}
+          </p>
+          
+          <div class="product-footer">
+            <div class="product-price">
+              <span class="current-price">${{ product.price | number:'1.2-2' }}</span>
+            </div>
+            
+            <div class="product-actions">
+              <button 
+                *ngIf="currentUser"
+                (click)="addToCart(product)"
+                [disabled]="product.stockQuantity === 0"
+                class="btn btn-secondary btn-sm add-to-cart-btn">
+                <span *ngIf="product.stockQuantity > 0">🛒 Add to Cart</span>
+                <span *ngIf="product.stockQuantity === 0">Out of Stock</span>
+              </button>
+              
+              <a *ngIf="!currentUser" 
+                 routerLink="/auth/login" 
+                 class="btn btn-outline btn-sm">
+                Login to Buy
+              </a>
+            </div>
+          </div>
+          
+          <div class="product-meta">
+            <span class="stock-info" 
+                  [class.low-stock]="product.stockQuantity <= 5"
+                  [class.out-of-stock]="product.stockQuantity === 0">
+              {{ product.stockQuantity > 0 ? product.stockQuantity + ' in stock' : 'Out of stock' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- List View Card -->
+      <div *ngIf="viewMode === 'list'" class="product-list-item">
+        <div class="list-image">
+          <img 
+            [src]="product.imageUrl || 'assets/default-product.png'" 
+            [alt]="product.name"
+            (error)="onImageError($event)">
+        </div>
+        
+        <div class="list-content">
+          <div class="list-main">
+            <h3 class="product-name">{{ product.name }}</h3>
+            <p class="product-description">{{ product.description }}</p>
+          </div>
+          
+          <div class="list-actions">
+            <div class="product-price">
+              <span class="current-price">${{ product.price | number:'1.2-2' }}</span>
+            </div>
+            
+            <div class="list-buttons">
+              <button (click)="viewProduct(product)" class="btn btn-outline btn-sm">
+                View Details
+              </button>
+              
+              <button 
+                *ngIf="currentUser"
+                (click)="addToCart(product)"
+                [disabled]="product.stockQuantity === 0"
+                class="btn btn-secondary">
+                <span *ngIf="product.stockQuantity > 0">Add to Cart</span>
+                <span *ngIf="product.stockQuantity === 0">Out of Stock</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

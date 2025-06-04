@@ -6,6 +6,7 @@ import com.CompraXApp.dto.SignupRequest;
 import com.CompraXApp.dto.UserProfileResponse;
 import com.CompraXApp.dto.UserUpdateRequest;
 import com.CompraXApp.exception.ResourceNotFoundException;
+import com.CompraXApp.exception.EmailAlreadyExistsException;
 import com.CompraXApp.model.Role;
 import com.CompraXApp.model.User;
 import com.CompraXApp.repository.RoleRepository;
@@ -14,10 +15,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional; // CAMBIAR: de javax a Spring
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -45,16 +49,21 @@ public class UserService {
     @Value("${app.frontend.resetpassword.path}")
     private String resetPasswordPath;
 
-    public User registerUser(SignupRequest signUpRequest) {
-        if (userRepository.existsByEmail(signUpRequest.getEmail())) {
-            throw new RuntimeException("Error: Email ya está en uso!");
+    public User registerUser(SignupRequest signUpRequest) throws EmailAlreadyExistsException {
+        // Verificar si el email ya existe
+        if (userRepository.findByEmail(signUpRequest.getEmail()).isPresent()) {
+            throw new EmailAlreadyExistsException("El email " + signUpRequest.getEmail() + " ya está registrado.");
         }
 
-
+        // Crear nuevo usuario
         User user = new User();
         user.setName(signUpRequest.getName());
         user.setEmail(signUpRequest.getEmail());
         user.setPassword(encoder.encode(signUpRequest.getPassword()));
+        user.setEnabled(false); // Inicialmente deshabilitado hasta verificación
+        String verificationCode = UUID.randomUUID().toString().substring(0, 6).toUpperCase(); // Código de 6 caracteres
+        user.setVerificationCode(verificationCode);
+        user.setVerificationCodeExpiryDate(LocalDateTime.now().plusMinutes(15)); // Cambiado de plusHours(24) a plusMinutes(15)
 
         Set<Role> roles = new HashSet<>();
         Role userRole = roleRepository.findByName(Role.ERole.ROLE_USER)
@@ -62,7 +71,36 @@ public class UserService {
         roles.add(userRole);
         user.setRoles(roles);
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        // Enviar email de verificación
+        try {
+            emailService.sendVerificationEmail(savedUser.getEmail(), verificationCode);
+        } catch (Exception e) {
+            // Manejar error de envío de email (loguear, etc.)
+            // Podrías considerar si el registro debe fallar aquí o si el usuario puede verificar más tarde
+            System.err.println("Error enviando email de verificación a " + savedUser.getEmail() + ": " + e.getMessage());
+        }
+
+        return savedUser; // Devuelves el usuario, el controlador decidirá la respuesta HTTP
+    }
+
+    public boolean verifyUser(String email, String code) {
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (!user.isEnabled() && user.getVerificationCode() != null &&
+                user.getVerificationCode().equals(code) &&
+                user.getVerificationCodeExpiryDate().isAfter(LocalDateTime.now())) {
+                
+                user.setEnabled(true);
+                user.setVerificationCode(null); 
+                user.setVerificationCodeExpiryDate(null);
+                userRepository.save(user); 
+                return true;
+            }
+        }
+        return false;
     }
 
     public User updateUser(Long userId, UserUpdateRequest updateRequest) {
@@ -81,11 +119,73 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    public void deleteUser(Long userId) {
+    /**
+     * Verifica si un usuario es el último administrador del sistema
+     */
+    public boolean isLastAdmin(Long userId) {
+        // Contar total de administradores activos
+        long adminCount = userRepository.countByRolesNameAndActiveTrue(Role.ERole.ROLE_ADMIN);
+        
+        // Verificar si el usuario actual es admin
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con id: " + userId));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        boolean isAdmin = user.getRoles().stream()
+                .anyMatch(role -> role.getName() == Role.ERole.ROLE_ADMIN);
+        
+        // Es el último admin si: es admin Y solo hay 1 admin en total
+        return isAdmin && adminCount == 1;
+    }
 
+    /**
+     * Eliminar usuario con validaciones de seguridad
+     */
+    @Transactional
+    public void deleteUser(Long userId) {
+        // Validar que no sea el último administrador
+        if (isLastAdmin(userId)) {
+            throw new RuntimeException("Cannot delete the last administrator account. Please assign admin role to another user first.");
+        }
+        
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        
+        // Soft delete - marcar como inactivo en lugar de eliminar
         user.setActive(false);
+        userRepository.save(user);
+    }
+
+    /**
+     * Actualizar roles con validaciones de seguridad - MÉTODO ÚNICO
+     */
+    @Transactional
+    public void updateUserRoles(Long userId, Set<Role.ERole> newRoles) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        
+        // Verificar si se está intentando quitar el rol ADMIN
+        boolean currentlyAdmin = user.getRoles().stream()
+                .anyMatch(role -> role.getName() == Role.ERole.ROLE_ADMIN);
+        
+        boolean willBeAdmin = newRoles.contains(Role.ERole.ROLE_ADMIN);
+        
+        // Si es admin actualmente y NO será admin después
+        if (currentlyAdmin && !willBeAdmin) {
+            // Validar que no sea el último administrador
+            if (isLastAdmin(userId)) {
+                throw new RuntimeException("Cannot remove admin role from the last administrator. Please assign admin role to another user first.");
+            }
+        }
+        
+        // Convertir ERole a Role entities
+        Set<Role> roles = new HashSet<>();
+        for (Role.ERole roleName : newRoles) {
+            Role role = roleRepository.findByName(roleName)
+                    .orElseThrow(() -> new RuntimeException("Error: Role " + roleName + " is not found."));
+            roles.add(role);
+        }
+        
+        user.setRoles(roles);
         userRepository.save(user);
     }
 
@@ -129,21 +229,7 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public void updateUserRoles(Long userId, Set<Role.ERole> roleNames) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-
-        Set<Role> roles = new HashSet<>();
-        for (Role.ERole roleName : roleNames) {
-            Role role = roleRepository.findByName(roleName)
-                    .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
-            roles.add(role);
-        }
-
-        user.setRoles(roles);
-        userRepository.save(user);
-    }
-
+    // ELIMINADO: método duplicado updateUserRoles
 
     public UserProfileResponse getUserProfile(Long id) {
         User user = userRepository.findById(id)
@@ -161,7 +247,6 @@ public class UserService {
 
         profileResponse.setRoles(roles);
 
-
         List<OrderDTO> purchaseHistory = orderService.getUserPurchaseHistory(id);
         profileResponse.setPurchaseHistory(purchaseHistory);
 
@@ -171,5 +256,9 @@ public class UserService {
     public User findByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+    }
+
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByEmail(username); // Asumiendo que email es el username
     }
 }

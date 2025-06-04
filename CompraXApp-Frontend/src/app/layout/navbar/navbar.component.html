@@ -1,1 +1,111 @@
-<p>navbar works!</p>
+<nav class="navbar">
+  <div class="navbar-container">
+    <!-- Logo y Marca -->
+    <div class="navbar-brand">
+      <a routerLink="/" class="brand-link">
+        <div class="brand-logo">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <rect width="32" height="32" rx="8" fill="currentColor"/>
+            <path d="M8 12h16l-2 8H10l-2-8z" fill="white"/>
+            <circle cx="12" cy="26" r="2" fill="white"/>
+            <circle cx="22" cy="26" r="2" fill="white"/>
+          </svg>
+        </div>
+        <span class="brand-text">CompraXApp</span>
+      </a>
+    </div>
+
+    <!-- Navigation Links -->
+    <div class="navbar-nav">
+      <a routerLink="/products" routerLinkActive="active" class="nav-link">
+        <span class="nav-icon">🛍️</span>
+        Products
+      </a>
+      
+      <a *ngIf="currentUser" routerLink="/cart" routerLinkActive="active" class="nav-link cart-link">
+        <span class="nav-icon">🛒</span>
+        Cart
+        <span *ngIf="cartItemCount > 0" class="cart-badge">{{ cartItemCount }}</span>
+      </a>
+      
+      <a *ngIf="currentUser && isAdmin()" routerLink="/admin" routerLinkActive="active" class="nav-link admin-link">
+        <span class="nav-icon">⚙️</span>
+        Admin
+      </a>
+    </div>
+
+    <!-- User Actions -->
+    <div class="navbar-user">
+      <!-- Auth Links (when not logged in) -->
+      <div *ngIf="!currentUser" class="auth-links">
+        <a routerLink="/auth/login" class="btn btn-outline btn-sm">Login</a>
+        <a routerLink="/auth/register" class="btn btn-primary btn-sm">Sign Up</a>
+      </div>
+      
+      <!-- User Menu (when logged in) -->
+      <div *ngIf="currentUser" class="nav-user-menu">
+        <div class="dropdown">
+          <button class="user-menu-btn" (click)="toggleUserMenu()">
+            <span class="user-icon">👤</span>
+            <span class="user-email">{{ currentUser.email }}</span>
+            <span class="dropdown-arrow">▼</span>
+          </button>
+          
+          <div *ngIf="isUserMenuOpen" class="dropdown-menu">
+            <a routerLink="/user/profile" class="dropdown-item" (click)="closeUserMenu()">
+              <span class="item-icon">👤</span>
+              My Profile
+            </a>
+            
+            <a routerLink="/user/orders" class="dropdown-item" (click)="closeUserMenu()">
+              <span class="item-icon">📦</span>
+              My Orders
+            </a>
+            
+            <div *ngIf="isAdmin()" class="dropdown-divider"></div>
+            
+            <a *ngIf="isAdmin()" routerLink="/admin" class="dropdown-item" (click)="closeUserMenu()">
+              <span class="item-icon">⚙️</span>
+              Admin Panel
+            </a>
+            
+            <div class="dropdown-divider"></div>
+            
+            <button (click)="logout()" class="dropdown-item logout-btn">
+              <span class="item-icon">🚪</span>
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" (click)="toggleMobileMenu()">
+      <span class="hamburger"></span>
+    </button>
+  </div>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" [class.open]="mobileMenuOpen">
+    <a routerLink="/products" (click)="closeMobileMenu()" class="mobile-nav-link">Products</a>
+    <a *ngIf="currentUser" routerLink="/cart" (click)="closeMobileMenu()" class="mobile-nav-link">
+      Cart <span *ngIf="cartItemCount > 0" class="cart-badge">{{ cartItemCount }}</span>
+    </a>
+    <a *ngIf="currentUser && isAdmin()" routerLink="/admin" (click)="closeMobileMenu()" class="mobile-nav-link">Admin</a>
+    
+    <div class="mobile-auth" *ngIf="!currentUser">
+      <a routerLink="/auth/login" (click)="closeMobileMenu()" class="btn btn-outline">Login</a>
+      <a routerLink="/auth/register" (click)="closeMobileMenu()" class="btn btn-primary">Sign Up</a>
+    </div>
+    
+    <div class="mobile-user" *ngIf="currentUser">
+      <div class="mobile-user-info">
+        <strong>{{ getUserName() }}</strong>
+        <span>{{ currentUser.email }}</span>
+      </div>
+      <a routerLink="/user/profile" (click)="closeMobileMenu()" class="mobile-nav-link">My Profile</a>
+      <button (click)="logout()" class="btn btn-danger">Logout</button>
+    </div>
+  </div>
+</nav>

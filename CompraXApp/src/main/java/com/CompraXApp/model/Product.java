@@ -32,4 +32,6 @@ public class Product {
     private String imageUrl;
 
     private boolean active = true;
+
+    
 }

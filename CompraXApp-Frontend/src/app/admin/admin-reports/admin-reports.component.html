@@ -1,0 +1,126 @@
+<div class="admin-reports">
+  <div class="reports-header">
+    <h1>📊 Reports & Analytics</h1>
+    <p>Comprehensive business intelligence and data insights</p>
+  </div>
+
+  <div *ngIf="isLoading" class="loading">
+    Loading reports data...
+  </div>
+
+  <div *ngIf="!isLoading" class="reports-content">
+    <!-- Quick Stats -->
+    <div class="quick-stats">
+      <h2>📈 Quick Overview</h2>
+      <div class="stats-grid">
+        <div class="stat-card revenue">
+          <div class="stat-icon">💰</div>
+          <div class="stat-info">
+            <h3>Total Revenue</h3>
+            <div class="stat-value">$45,678</div>
+            <div class="stat-change positive">+12.5% from last month</div>
+          </div>
+        </div>
+        
+        <div class="stat-card orders">
+          <div class="stat-icon">📋</div>
+          <div class="stat-info">
+            <h3>Total Orders</h3>
+            <div class="stat-value">1,234</div>
+            <div class="stat-change positive">+8.3% from last month</div>
+          </div>
+        </div>
+        
+        <div class="stat-card customers">
+          <div class="stat-icon">👥</div>
+          <div class="stat-info">
+            <h3>Active Customers</h3>
+            <div class="stat-value">567</div>
+            <div class="stat-change positive">+15.2% from last month</div>
+          </div>
+        </div>
+        
+        <div class="stat-card conversion">
+          <div class="stat-icon">📈</div>
+          <div class="stat-info">
+            <h3>Conversion Rate</h3>
+            <div class="stat-value">3.4%</div>
+            <div class="stat-change negative">-0.8% from last month</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reports Grid -->
+    <div class="reports-grid">
+      <div *ngFor="let report of reports" class="report-card" [class]="'card-' + report.color">
+        <div class="report-header">
+          <div class="report-icon">{{ report.icon }}</div>
+          <div class="report-info">
+            <h3>{{ report.title }}</h3>
+            <p>{{ report.description }}</p>
+          </div>
+        </div>
+        
+        <div class="report-data">
+          <div class="data-point" *ngFor="let item of report.data | keyvalue">
+            <span class="data-label">{{ item.key }}:</span>
+            <span class="data-value">{{ item.value }}</span>
+          </div>
+        </div>
+        
+        <div class="report-actions">
+          <button (click)="generateReport(report.title)" class="btn-generate">
+            🔄 Generate
+          </button>
+          <button (click)="exportReport(report.title)" class="btn-export">
+            📤 Export
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advanced Analytics -->
+    <div class="advanced-section">
+      <h2>🎯 Advanced Analytics</h2>
+      <div class="analytics-grid">
+        <div class="chart-card">
+          <h3>📊 Sales Trends</h3>
+          <div class="chart-placeholder">
+            <p>Sales chart would go here</p>
+            <div class="mock-chart">
+              <div class="chart-bar" style="height: 60%;"></div>
+              <div class="chart-bar" style="height: 80%;"></div>
+              <div class="chart-bar" style="height: 45%;"></div>
+              <div class="chart-bar" style="height: 90%;"></div>
+              <div class="chart-bar" style="height: 70%;"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="chart-card">
+          <h3>🍰 Product Categories</h3>
+          <div class="chart-placeholder">
+            <p>Pie chart would go here</p>
+            <div class="mock-pie">
+              <div class="pie-segment segment-1"></div>
+              <div class="pie-segment segment-2"></div>
+              <div class="pie-segment segment-3"></div>
+              <div class="pie-segment segment-4"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export Options -->
+    <div class="export-section">
+      <h2>📤 Export Options</h2>
+      <div class="export-buttons">
+        <button class="export-btn pdf">📄 Export as PDF</button>
+        <button class="export-btn excel">📊 Export as Excel</button>
+        <button class="export-btn csv">📋 Export as CSV</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,103 @@
+<div class="user-profile">
+  <div class="profile-header">
+    <h1>👤 My Profile</h1>
+    <p>Manage your personal information and account settings</p>
+  </div>
+
+  <div *ngIf="isLoading" class="loading">
+    <div class="spinner"></div>
+    <span>Loading profile...</span>
+  </div>
+
+  <div *ngIf="!isLoading" class="profile-content">
+    <!-- Profile Form -->
+    <div class="profile-section">
+      <div class="card">
+        <div class="card-header">
+          <h2>📝 Personal Information</h2>
+        </div>
+        
+        <div class="card-body">
+          <form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input 
+                  type="email" 
+                  formControlName="email"
+                  class="form-input"
+                  readonly>
+                <small class="form-help">Email cannot be changed</small>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Full Name *</label>
+                <input 
+                  type="text" 
+                  formControlName="name"
+                  class="form-input"
+                  [class.error]="name?.invalid && name?.touched"
+                  placeholder="Enter your full name">
+                <div *ngIf="name?.invalid && name?.touched" class="form-error">
+                  <span *ngIf="name?.errors?.['required']">Name is required</span>
+                  <span *ngIf="name?.errors?.['minlength']">Name must be at least 2 characters</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Shipping Address</label>
+                <textarea 
+                  formControlName="shippingAddress"
+                  class="form-input"
+                  rows="3"
+                  placeholder="Enter your default shipping address (optional)"></textarea>
+                <small class="form-help">This will be used as default for orders</small>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button 
+                type="submit"
+                class="btn btn-primary"
+                [disabled]="profileForm.invalid || isSaving">
+                <span *ngIf="!isSaving">💾 Save Changes</span>
+                <span *ngIf="isSaving">⏳ Saving...</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Info (SOLO mostrar ID) -->
+    <div class="account-section">
+      <div class="card">
+        <div class="card-header">
+          <h2>ℹ️ Account Information</h2>
+        </div>
+        
+        <div class="card-body">
+          <div class="info-row">
+            <span class="info-label">Account ID:</span>
+            <span class="info-value">{{ userProfile?.id || 'N/A' }}</span>
+          </div>
+          
+        
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div *ngIf="successMessage" class="alert alert-success">
+      ✅ {{ successMessage }}
+    </div>
+
+    <div *ngIf="errorMessage" class="alert alert-error">
+      ❌ {{ errorMessage }}
+    </div>
+  </div>
+</div>

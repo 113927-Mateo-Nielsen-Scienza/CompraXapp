@@ -1,1 +1,97 @@
-<p>product-detail works!</p>
+<div class="product-detail-container">
+  <!-- Breadcrumb Navigation -->
+  <nav class="breadcrumb">
+    <a routerLink="/">Home</a>
+    <span>></span>
+    <a routerLink="/products">Products</a>
+    <span>></span>
+    <span>{{ product?.name || 'Product Details' }}</span>
+  </nav>
+
+  <div *ngIf="isLoading" class="loading-indicator">
+    <p>Loading product details...</p>
+  </div>
+
+  <div *ngIf="!isLoading && !product" class="not-found">
+    <h2>🚫 Product Not Found</h2>
+    <p>The product you're looking for doesn't exist or has been removed.</p>
+    <a routerLink="/products" class="btn btn-primary">← Back to Products</a>
+  </div>
+
+  <div *ngIf="!isLoading && product" class="product-content">
+    <div class="product-image-section">
+      <img 
+        [src]="product.imageUrl || 'assets/default-product.png'" 
+        [alt]="product.name" 
+        class="main-product-image">
+    </div>
+    
+    <div class="product-info-section">
+      <h1>{{ product.name }}</h1>
+      <p class="product-price-detail">{{ product.price | currency:'USD':'symbol' }}</p>
+      <p class="product-description-detail">{{ product.description }}</p>
+
+      <!-- Stock Information -->
+      <div *ngIf="product.stockQuantity && product.stockQuantity > 0" class="stock-info">
+        <p>✅ <strong>In Stock:</strong> {{ product.stockQuantity }} available</p>
+      </div>
+      
+      <div *ngIf="product.stockQuantity === 0" class="out-of-stock">
+        <p>❌ Out of Stock</p>
+      </div>
+
+      <!-- Quantity Selector -->
+      <div class="quantity-selector" *ngIf="product.stockQuantity && product.stockQuantity > 0">
+        <label for="quantity">Quantity:</label>
+        <button 
+          type="button"
+          (click)="decrementQuantity()" 
+          [disabled]="quantity <= 1"
+          aria-label="Decrease quantity">
+          −
+        </button>
+        <input 
+          type="number" 
+          id="quantity" 
+          [(ngModel)]="quantity" 
+          min="1" 
+          [max]="product.stockQuantity"
+          readonly>
+        <button 
+          type="button"
+          (click)="incrementQuantity()" 
+          [disabled]="quantity >= (product.stockQuantity || Infinity)"
+          aria-label="Increase quantity">
+          +
+        </button>
+      </div>
+
+      <!-- Add to Cart Button -->
+      <button 
+        type="button"
+        (click)="addToCart()" 
+        class="add-to-cart-btn-detail" 
+        [disabled]="!product.stockQuantity || product.stockQuantity === 0 || !isLoggedIn">
+        <span *ngIf="!isLoggedIn">🔐 Login to Purchase</span>
+        <span *ngIf="isLoggedIn && product.stockQuantity > 0">🛒 Add to Cart</span>
+        <span *ngIf="isLoggedIn && product.stockQuantity === 0">❌ Out of Stock</span>
+      </button>
+
+      <!-- Product Meta Information -->
+      <div class="product-meta">
+        <div class="meta-item">
+          <h4>Availability</h4>
+          <p>{{ product.stockQuantity > 0 ? 'In Stock' : 'Out of Stock' }}</p>
+        </div>
+        <div class="meta-item">
+          <h4>Product ID</h4>
+          <p>#{{ product.id }}</p>
+        </div>
+        <div class="meta-item">
+          <h4>Category</h4>
+          <p>General</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

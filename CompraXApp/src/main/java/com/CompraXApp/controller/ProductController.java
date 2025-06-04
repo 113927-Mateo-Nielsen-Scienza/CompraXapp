@@ -1,5 +1,7 @@
 package com.CompraXApp.controller;
 
+import com.CompraXApp.dto.ProductCreateRequest;
+import com.CompraXApp.dto.ProductResponse;
 import com.CompraXApp.model.Product;
 import com.CompraXApp.service.ProductService;
 import jakarta.validation.Valid;
@@ -11,57 +13,111 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/products")
-@CrossOrigin(origins = "*")
 public class ProductController {
 
     @Autowired
     private ProductService productService;
 
-    // SCRUM-11: Consulta del catálogo (Public access)
     @GetMapping
-    public ResponseEntity<List<Product>> getAllProducts(
+    public ResponseEntity<List<ProductResponse>> getAllProducts(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice) {
+        
+        System.out.println("=== CONTROLLER DEBUG ===");
+        System.out.println("Received keyword: " + keyword);
+        System.out.println("Received minPrice: " + minPrice);
+        System.out.println("Received maxPrice: " + maxPrice);
+        
         List<Product> products;
         if (keyword != null || minPrice != null || maxPrice != null) {
             products = productService.searchProducts(keyword, minPrice, maxPrice);
         } else {
             products = productService.getAllActiveProducts();
         }
-        return ResponseEntity.ok(products);
+        
+        List<ProductResponse> productResponses = products.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+        
+        System.out.println("Returning " + productResponses.size() + " products");
+        
+        return ResponseEntity.ok(productResponses);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+    public ResponseEntity<ProductResponse> getProductById(@PathVariable Long id) {
         Product product = productService.getProductById(id);
-        return ResponseEntity.ok(product);
+        return ResponseEntity.ok(convertToResponse(product));
     }
 
-    // SCRUM-8: Alta de productos (Admin only)
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Product> createProduct(@Valid @RequestBody Product product) {
-        Product createdProduct = productService.createProduct(product);
-        return new ResponseEntity<>(createdProduct, HttpStatus.CREATED);
+    public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductCreateRequest productRequest) {
+        try {
+            // Convertir DTO a entidad (SIN ID)
+            Product product = new Product();
+            product.setName(productRequest.getName());
+            product.setDescription(productRequest.getDescription());
+            product.setPrice(productRequest.getPrice());
+            product.setStockQuantity(productRequest.getStockQuantity());
+            product.setImageUrl(productRequest.getImageUrl());
+            product.setActive(productRequest.getActive());
+            
+            Product savedProduct = productService.createProduct(product);
+            
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(convertToResponse(savedProduct));
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Error al crear producto: " + e.getMessage());
+        }
     }
 
-    // SCRUM-9: Modificación de productos (Admin only)
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @Valid @RequestBody Product productDetails) {
-        Product updatedProduct = productService.updateProduct(id, productDetails);
-        return ResponseEntity.ok(updatedProduct);
+    public ResponseEntity<ProductResponse> updateProduct(@PathVariable Long id, 
+                                                        @Valid @RequestBody ProductCreateRequest productRequest) {
+        try {
+            // Convertir DTO a entidad para actualización
+            Product productDetails = new Product();
+            productDetails.setName(productRequest.getName());
+            productDetails.setDescription(productRequest.getDescription());
+            productDetails.setPrice(productRequest.getPrice());
+            productDetails.setStockQuantity(productRequest.getStockQuantity());
+            productDetails.setImageUrl(productRequest.getImageUrl());
+            productDetails.setActive(productRequest.getActive());
+            
+            Product updatedProduct = productService.updateProduct(id, productDetails);
+            return ResponseEntity.ok(convertToResponse(updatedProduct));
+            
+        } catch (Exception e) {
+            throw new RuntimeException("Error al actualizar producto: " + e.getMessage());
+        }
     }
 
-    // SCRUM-10: Eliminación de productos (Admin only)
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-        productService.deleteProduct(id); // This method in service should ideally soft delete
+        productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
+    }
+    
+    // Método helper para convertir entidad a DTO de respuesta
+    private ProductResponse convertToResponse(Product product) {
+        return new ProductResponse(
+            product.getId(),
+            product.getName(),
+            product.getDescription(),
+            product.getPrice(),
+            product.getStockQuantity(),
+            product.getImageUrl(),
+            product.isActive() 
+            
+        );
     }
 }

@@ -1,0 +1,120 @@
+<div class="admin-users">
+  <!-- Header -->
+  <div class="header">
+    <h1>👥 User Management</h1>
+  </div>
+
+  <!-- Search Section -->
+  <div class="search-section">
+    <input 
+      type="text" 
+      [(ngModel)]="searchKeyword" 
+      placeholder="🔍 Search users by email or username..."
+      class="search-input">
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading">
+    <span>Loading users...</span>
+  </div>
+
+  <!-- Users Content -->
+  <div *ngIf="!isLoading" class="users-content">
+    <!-- No Users State -->
+    <div *ngIf="users.length === 0" class="no-users">
+      <p>No users found.</p>
+    </div>
+
+    <!-- Users Table -->
+    <div *ngIf="users.length > 0" class="users-table">
+      <table>
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Username</th>
+            <th>Roles</th>
+            <th>Status</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of filteredUsers" 
+              [class.current-user]="isCurrentUser(user)">
+            
+            <!-- Email Cell -->
+            <td class="email-cell">
+              {{ user.email }}
+              <span *ngIf="isCurrentUser(user)" class="current-user-badge">
+                You
+              </span>
+            </td>
+            
+            <!-- Username Cell -->
+            <td class="username-cell">
+              {{ user.username || 'N/A' }}
+            </td>
+            
+            <!-- Roles Cell -->
+            <td class="roles-cell">
+              <div class="roles-container">
+                <span *ngFor="let role of user.roles" 
+                      class="role-badge"
+                      [class]="'role-' + role.name.toLowerCase()">
+                  {{ role.name.replace('ROLE_', '') }}
+                </span>
+              </div>
+            </td>
+            
+            <!-- Status Cell -->
+            <td class="status-cell">
+              <span [class.status-active]="user.enabled"
+                    [class.status-inactive]="!user.enabled">
+                {{ user.enabled ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            
+            <!-- Date Cell -->
+            <td class="date-cell">
+              {{ user.createdAt | date:'shortDate' }}
+            </td>
+            
+            <!-- Actions Cell -->
+            <td class="actions-cell">
+              <div class="action-buttons">
+                <!-- Make Admin Button -->
+                <button 
+                  *ngIf="!hasRole(user, 'ROLE_ADMIN')" 
+                  (click)="toggleUserRole(user, 'ROLE_ADMIN')"
+                  class="make-admin-btn"
+                  [disabled]="isCurrentUser(user)"
+                  title="Make Admin">
+                  👑
+                </button>
+                
+                <!-- Remove Admin Button -->
+                <button 
+                  *ngIf="hasRole(user, 'ROLE_ADMIN')" 
+                  (click)="toggleUserRole(user, 'ROLE_ADMIN')"
+                  class="remove-admin-btn"
+                  [disabled]="isCurrentUser(user)"
+                  title="Remove Admin">
+                  👤
+                </button>
+                
+                <!-- Delete User Button -->
+                <button 
+                  (click)="deleteUser(user)"
+                  class="delete-btn"
+                  [disabled]="isCurrentUser(user)"
+                  title="Delete User">
+                  🗑️
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

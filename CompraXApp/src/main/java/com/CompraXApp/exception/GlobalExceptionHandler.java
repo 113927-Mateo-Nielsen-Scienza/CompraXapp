@@ -44,9 +44,27 @@ public class GlobalExceptionHandler {
         
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
+
+  
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<?> handleEmailAlreadyExistsException(EmailAlreadyExistsException ex, WebRequest request) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("message", ex.getMessage());
+        body.put("status", HttpStatus.CONFLICT.value()); // 409 Conflict
+        body.put("error", "Conflict");
+        body.put("path", request.getDescription(false).replace("uri=", "")); // Limpia el path
+        
+        return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+    }
     
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> globalExceptionHandler(Exception ex, WebRequest request) {
+
+        System.err.println("OCURRIÓ UNA EXCEPCIÓN NO MANEJADA (ERROR 500 GENÉRICO):");
+        ex.printStackTrace();
+
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());
         body.put("message", ex.getMessage());

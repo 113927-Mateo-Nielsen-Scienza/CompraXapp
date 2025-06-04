@@ -1,1 +1,78 @@
-<p>checkout works!</p>
+<div class="checkout-container">
+  <h2>Checkout</h2>
+
+  <div *ngIf="isLoading" class="loading">
+    <p>Loading your cart...</p>
+  </div>
+
+  <div *ngIf="!isLoading && cart && hasItems()" class="checkout-content">
+    <!-- Order Summary -->
+    <div class="order-summary">
+      <h3>Order Summary</h3>
+      <div class="cart-items">
+        <div *ngFor="let item of cart.items" class="cart-item">
+          <span>{{ item.productName }}</span>
+          <span>Qty: {{ item.quantity }}</span>
+          <span>${{ (item.pricePerUnit * item.quantity).toFixed(2) }}</span>
+        </div>
+      </div>
+      <div class="total">
+        <strong>Total: ${{ calculateTotal().toFixed(2) }}</strong>
+      </div>
+    </div>
+
+    <!-- Checkout Form -->
+    <form [formGroup]="checkoutForm" (ngSubmit)="placeOrder()" class="checkout-form">
+      <div class="form-group">
+        <label for="shippingAddress">Shipping Address *</label>
+        <textarea 
+          id="shippingAddress"
+          formControlName="shippingAddress"
+          placeholder="Enter your complete shipping address..."
+          rows="3"
+          [class.error]="isFieldInvalid('shippingAddress')"></textarea>
+        <div *ngIf="isFieldInvalid('shippingAddress')" class="error-message">
+          {{ getFieldError('shippingAddress') }}
+        </div>
+        <div *ngIf="validationErrors['shippingAddress']" class="error-message">
+          {{ validationErrors['shippingAddress'] }}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="paymentMethod">Payment Method *</label>
+        <select 
+          id="paymentMethod"
+          formControlName="paymentMethod"
+          [class.error]="isFieldInvalid('paymentMethod')">
+          <option value="MERCADOPAGO">MercadoPago</option>
+          <option value="WHATSAPP">WhatsApp Payment</option>
+        </select>
+        <div *ngIf="isFieldInvalid('paymentMethod')" class="error-message">
+          {{ getFieldError('paymentMethod') }}
+        </div>
+        <div *ngIf="validationErrors['paymentMethod']" class="error-message">
+          {{ validationErrors['paymentMethod'] }}
+        </div>
+      </div>
+
+      <div *ngIf="errorMessage" class="alert alert-danger">
+        {{ errorMessage }}
+      </div>
+
+      <button 
+        type="submit"
+        [disabled]="checkoutForm.invalid || isSubmitting || !hasItems()"
+        class="btn btn-primary">
+        <span *ngIf="isSubmitting">Placing Order...</span>
+        <span *ngIf="!isSubmitting">Place Order</span>
+      </button>
+    </form>
+  </div>
+
+  <div *ngIf="!isLoading && (!cart || !hasItems())" class="empty-cart">
+    <h3>Your cart is empty</h3>
+    <p>Add some items to your cart before proceeding to checkout.</p>
+    <a routerLink="/products" class="btn btn-primary">Continue Shopping</a>
+  </div>
+</div>

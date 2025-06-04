@@ -3,64 +3,141 @@ package com.CompraXApp.controller;
 import com.CompraXApp.dto.LoginRequest;
 import com.CompraXApp.dto.PasswordResetRequest;
 import com.CompraXApp.dto.SignupRequest;
-import com.CompraXApp.model.User;
 import com.CompraXApp.service.UserService;
+import com.CompraXApp.model.User;
+import com.CompraXApp.dto.VerificationRequest;
+import com.CompraXApp.dto.MessageResponse; 
+import com.CompraXApp.exception.EmailAlreadyExistsException; 
+import com.CompraXApp.repository.RoleRepository;
+import com.CompraXApp.repository.UserRepository;
+import com.CompraXApp.security.UserDetailsImpl; // ← CAMBIAR ESTO
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "*")
 public class AuthController {
 
     @Autowired
-    private AuthenticationManager authenticationManager;
+    AuthenticationManager authenticationManager;
 
     @Autowired
-    private UserService userService;
+    UserRepository userRepository;
+
+    @Autowired
+    RoleRepository roleRepository;
+
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
+    @Autowired
+    UserService userService;
 
     @PostMapping("/signin")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
+    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+        try {
+            System.out.println("=== LOGIN DEBUG ===");
+            System.out.println("Email: " + loginRequest.getEmail());
+            System.out.println("Password: " + loginRequest.getPassword());
+            
+            // Verificar que el usuario existe
+            Optional<User> userOpt = userRepository.findByEmail(loginRequest.getEmail());
+            if (!userOpt.isPresent()) {
+                System.out.println("❌ Usuario no encontrado: " + loginRequest.getEmail());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new MessageResponse("Usuario no encontrado"));
+            }
+            
+            User user = userOpt.get();
+            System.out.println("✅ Usuario encontrado: " + user.getName());
+            
+            // Autenticar usando Spring Security con SESIONES
+            Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
-        );
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-    
-        
-        User user = userService.findByEmail(loginRequest.getEmail());
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Login successful");
-        response.put("id", user.getId());
-        response.put("email", user.getEmail());
-        response.put("name", user.getName());
-        
-        return ResponseEntity.ok(response);
+            );
+            
+            // Establecer la autenticación en el contexto de seguridad
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            
+            // Crear sesión HTTP
+            HttpSession session = request.getSession(true);
+            session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+            
+            System.out.println("✅ Login exitoso, sesión creada: " + session.getId());
+            
+            // Obtener roles del usuario - CORREGIDO
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            List<String> roles = userDetails.getAuthorities().stream()
+                    .map(authority -> authority.getAuthority())
+                    .collect(Collectors.toList());
+            
+            // Respuesta simple sin JWT
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Login exitoso");
+            response.put("email", user.getEmail());
+            response.put("name", user.getName());
+            response.put("roles", roles);
+            response.put("sessionId", session.getId());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (BadCredentialsException e) {
+            System.out.println("❌ Credenciales incorrectas");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new MessageResponse("Email o contraseña incorrectos"));
+        } catch (Exception e) {
+            System.err.println("❌ Error en login: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResponse("Error interno del servidor"));
+        }
     }
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
-        User user = userService.registerUser(signUpRequest);
+        try {
+            userService.registerUser(signUpRequest);
+            return ResponseEntity.status(HttpStatus.CREATED) 
+                    .body(new MessageResponse("Usuario registrado exitosamente. Por favor, verifica tu email con el código enviado."));
+        } catch (EmailAlreadyExistsException e) {
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT) 
+                    .body(new MessageResponse(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(new MessageResponse("Error durante el registro: " + e.getMessage()));
+        }
+    }
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Usuario registrado exitosamente!");
-        response.put("userId", user.getId());
-
-        return ResponseEntity.ok(response);
+    @PostMapping("/verify-account")
+    public ResponseEntity<?> verifyAccount(@Valid @RequestBody VerificationRequest verificationRequest) {
+        boolean isVerified = userService.verifyUser(verificationRequest.getEmail(), verificationRequest.getCode());
+        if (isVerified) {
+            return ResponseEntity.ok(new MessageResponse("Cuenta verificada exitosamente. Ahora puedes iniciar sesión."));
+        } else {
+            return ResponseEntity.badRequest().body(new MessageResponse("Código de verificación inválido o expirado."));
+        }
     }
 
     @PostMapping("/password-reset-request")

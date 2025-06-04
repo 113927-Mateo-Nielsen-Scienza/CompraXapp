@@ -1,1 +1,127 @@
-<p>cart-view works!</p>
+<div class="cart-view-container">
+  <h2>Your Shopping Cart</h2>
+
+  <div *ngIf="isLoading" class="loading-indicator">
+    <p>Loading cart...</p>
+  </div>
+
+  <div *ngIf="!isLoading && !hasItems()" class="empty-cart">
+    <p>Your cart is empty.</p>
+    <a routerLink="/products" class="continue-shopping-btn">Continue Shopping</a>
+  </div>
+
+  <div *ngIf="!isLoading && hasItems()" class="cart-content">
+    <div class="cart-items">
+      <div *ngFor="let item of cart!.items" class="cart-item">
+        <div class="item-image">
+          <img [src]="item.imageUrl || 'assets/default-product.png'" 
+               [alt]="item.productName" 
+               class="cart-item-image"
+               (error)="onImageError($event)">
+        </div>
+        
+        <div class="item-details">
+          <h4 class="item-name">{{ item.productName }}</h4>
+          <p class="item-price">
+            Unit Price: 
+            <span *ngIf="item.pricePerUnit && item.pricePerUnit > 0">
+              {{ item.pricePerUnit | currency:'USD':'symbol' }}
+            </span>
+            <span *ngIf="!item.pricePerUnit || item.pricePerUnit === 0" class="price-error">
+              Price not available
+            </span>
+          </p>
+          <p class="item-stock">
+            Available: In Stock
+          </p>
+        </div>
+        
+        <div class="item-quantity">
+          <label for="qty-{{ item.productId }}">Quantity:</label>
+          <div class="quantity-controls">
+            <button 
+              type="button"
+              (click)="decrementQuantity(item)"
+              [disabled]="item.quantity <= 1"
+              class="qty-btn"
+              aria-label="Decrease quantity">
+              −
+            </button>
+            <input 
+              type="number" 
+              id="qty-{{ item.productId }}"
+              [value]="item.quantity" 
+              min="1"
+              max="99"
+              (change)="updateQuantity(item, $any($event.target).valueAsNumber)"
+              class="quantity-input"
+              readonly>
+            <button 
+              type="button"
+              (click)="incrementQuantity(item)"
+              class="qty-btn"
+              aria-label="Increase quantity">
+              +
+            </button>
+          </div>
+        </div>
+        
+        <div class="item-total">
+          <div class="total-label">Subtotal:</div>
+          <div class="total-amount">
+            <span *ngIf="calculateItemTotal(item) > 0">
+              {{ calculateItemTotal(item) | currency:'USD':'symbol' }}
+            </span>
+            <span *ngIf="calculateItemTotal(item) === 0" class="price-error">
+              $0.00 (Price missing)
+            </span>
+          </div>
+        </div>
+        
+        <div class="item-actions">
+          <button 
+            (click)="removeItem(item)" 
+            class="remove-btn"
+            title="Remove from cart">
+            🗑️ Remove
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cart-summary">
+      <h3>Order Summary</h3>
+      
+      <div class="summary-details">
+        <div class="summary-row">
+          <span class="summary-label">Items ({{ getTotalItems() }}):</span>
+          <span class="summary-value">{{ getSubtotal() | currency:'USD':'symbol' }}</span>
+        </div>
+        
+        <div class="summary-row">
+          <span class="summary-label">Shipping:</span>
+          <span class="summary-value">FREE</span>
+        </div>
+        
+        <div class="summary-row">
+          <span class="summary-label">Tax:</span>
+          <span class="summary-value">Calculated at checkout</span>
+        </div>
+        
+        <div class="summary-row total-row">
+          <span class="summary-label">Estimated Total:</span>
+          <span class="summary-value">{{ getCartTotal() | currency:'USD':'symbol' }}</span>
+        </div>
+      </div>
+      
+      <div class="cart-actions">
+        <button (click)="clearCart()" class="clear-cart-btn">
+          🗑️ Clear Cart
+        </button>
+        <button (click)="proceedToCheckout()" class="checkout-btn">
+          💳 Proceed to Checkout
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

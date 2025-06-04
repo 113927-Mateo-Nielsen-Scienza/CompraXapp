@@ -28,6 +28,12 @@ public class CartService {
     private ProductRepository productRepository;
 
     @Transactional
+    public Cart getCartByUser(User user) {
+        return cartRepository.findByUserId(user.getId())
+                .orElseGet(() -> createCartForUser(user));
+    }
+
+    @Transactional
     public CartDTO getCartByUserId(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));

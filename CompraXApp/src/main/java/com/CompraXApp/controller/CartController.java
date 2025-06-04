@@ -11,21 +11,19 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/cart")
-@CrossOrigin(origins = "*")
-@PreAuthorize("hasRole('USER')") 
+@PreAuthorize("hasRole('USER')")
 public class CartController {
 
     @Autowired
     private CartService cartService;
 
-
+    // CORREGIR: Usar CartDTO en lugar de Cart y UserDetailsImpl
     @GetMapping
     public ResponseEntity<CartDTO> getCart(@AuthenticationPrincipal UserDetailsImpl currentUser) {
         CartDTO cart = cartService.getCartByUserId(currentUser.getId());
         return ResponseEntity.ok(cart);
     }
 
-  
     @PostMapping("/items")
     public ResponseEntity<CartDTO> addProductToCart(@AuthenticationPrincipal UserDetailsImpl currentUser,
                                                     @RequestParam Long productId,
@@ -34,7 +32,6 @@ public class CartController {
         return ResponseEntity.ok(cart);
     }
 
-   
     @PutMapping("/items/{productId}")
     public ResponseEntity<CartDTO> updateProductQuantity(@AuthenticationPrincipal UserDetailsImpl currentUser,
                                                          @PathVariable Long productId,
@@ -43,15 +40,13 @@ public class CartController {
         return ResponseEntity.ok(cart);
     }
 
- 
     @DeleteMapping("/items/{productId}")
     public ResponseEntity<CartDTO> removeProductFromCart(@AuthenticationPrincipal UserDetailsImpl currentUser,
-                                                          @PathVariable Long productId) {
+                                                         @PathVariable Long productId) {
         CartDTO cart = cartService.removeProductFromCart(currentUser.getId(), productId);
         return ResponseEntity.ok(cart);
     }
 
-    
     @DeleteMapping
     public ResponseEntity<CartDTO> clearCart(@AuthenticationPrincipal UserDetailsImpl currentUser) {
         CartDTO cart = cartService.clearCart(currentUser.getId());

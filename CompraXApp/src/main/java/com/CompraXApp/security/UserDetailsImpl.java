@@ -18,18 +18,21 @@ public class UserDetailsImpl implements UserDetails {
     private Long id;
     private String username;
     private String email;
+    private boolean enabled; // Campo agregado
 
     @JsonIgnore
     private String password;
 
     private Collection<? extends GrantedAuthority> authorities;
 
+    // Constructor actualizado con el parámetro enabled
     public UserDetailsImpl(Long id, String username, String email, String password,
-                           Collection<? extends GrantedAuthority> authorities) {
+                           boolean enabled, Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.username = username;
         this.email = email;
         this.password = password;
+        this.enabled = enabled; // Asignar el valor
         this.authorities = authorities;
     }
 
@@ -43,6 +46,7 @@ public class UserDetailsImpl implements UserDetails {
                 user.getName(),
                 user.getEmail(),
                 user.getPassword(),
+                user.isEnabled(), // Pasar el campo enabled del usuario
                 authorities);
     }
 
@@ -86,7 +90,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled; // Retornar el campo enabled real del usuario
     }
 
     @Override
