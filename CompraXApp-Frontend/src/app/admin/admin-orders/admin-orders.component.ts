@@ -31,12 +31,12 @@ export class AdminOrdersComponent implements OnInit {
   selectedStatus = '';
   searchKeyword = '';
 
+  // ✅ FIX: Estados que SÍ existen en el backend
   orderStatuses = [
     { value: '', label: 'All Orders' },
     { value: 'PENDING', label: 'Pending' },
-    { value: 'CONFIRMED', label: 'Confirmed' },
-    { value: 'SHIPPED', label: 'Shipped' },
-    { value: 'DELIVERED', label: 'Delivered' },
+    { value: 'PROCESSING', label: 'Processing' },
+    { value: 'COMPLETED', label: 'Completed' }, // ✅ Era DELIVERED
     { value: 'CANCELLED', label: 'Cancelled' }
   ];
 
@@ -63,15 +63,31 @@ export class AdminOrdersComponent implements OnInit {
   updateOrderStatus(order: Order, newStatus: string): void {
     if (order.status === newStatus) return;
 
+    // ✅ FIX: Estados permitidos según el backend
+    const allowedStatuses = ['PENDING', 'PROCESSING', 'COMPLETED', 'CANCELLED'];
+    if (!allowedStatuses.includes(newStatus)) {
+      alert(`Status "${newStatus}" is not allowed. Valid statuses: ${allowedStatuses.join(', ')}`);
+      return;
+    }
+
     if (confirm(`Change order #${order.id} status from ${order.status} to ${newStatus}?`)) {
+      console.log(`🔄 Updating order ${order.id} status from ${order.status} to ${newStatus}`);
+      
       this.adminService.updateOrderStatus(order.id, newStatus).subscribe({
-        next: () => {
-          order.status = newStatus; // Update local state
+        next: (response) => {
+          console.log('✅ Status update successful:', response);
+          order.status = newStatus;
           alert('Order status updated successfully');
         },
         error: (err) => {
-          alert('Failed to update order status: ' + (err.error?.message || 'Please try again'));
-          console.error('Error updating order status:', err);
+          console.error('❌ Status update failed:', err);
+          
+          let errorMessage = 'Failed to update order status';
+          if (err.error?.error) {
+            errorMessage = err.error.error;
+          }
+          
+          alert(errorMessage);
         }
       });
     }

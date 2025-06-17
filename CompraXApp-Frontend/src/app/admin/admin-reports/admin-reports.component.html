@@ -2,14 +2,30 @@
   <div class="reports-header">
     <h1>📊 Reports & Analytics</h1>
     <p>Comprehensive business intelligence and data insights</p>
+    <button (click)="refreshData()" class="refresh-btn" [disabled]="isLoading">
+      <span *ngIf="!isLoading">🔄 Refresh Data</span>
+      <span *ngIf="isLoading">⏳ Loading...</span>
+    </button>
   </div>
 
-  <div *ngIf="isLoading" class="loading">
-    Loading reports data...
+  <!-- ✅ LOADING STATE -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p>Loading reports data...</p>
   </div>
 
-  <div *ngIf="!isLoading" class="reports-content">
-    <!-- Quick Stats -->
+  <!-- ✅ ERROR STATE -->
+  <div *ngIf="errorMessage && !isLoading" class="error-container">
+    <div class="error-message">
+      <h3>⚠️ Error Loading Data</h3>
+      <p>{{ errorMessage }}</p>
+      <button (click)="refreshData()" class="retry-btn">🔄 Retry</button>
+    </div>
+  </div>
+
+  <!-- ✅ MAIN CONTENT -->
+  <div *ngIf="!isLoading && !errorMessage" class="reports-content">
+    <!-- Quick Stats con datos reales -->
     <div class="quick-stats">
       <h2>📈 Quick Overview</h2>
       <div class="stats-grid">
@@ -17,8 +33,8 @@
           <div class="stat-icon">💰</div>
           <div class="stat-info">
             <h3>Total Revenue</h3>
-            <div class="stat-value">$45,678</div>
-            <div class="stat-change positive">+12.5% from last month</div>
+            <div class="stat-value">{{ totalRevenue | currency:'USD':'symbol':'1.2-2' }}</div>
+            <div class="stat-change positive">{{ reports[0].data.growth }} from last period</div>
           </div>
         </div>
         
@@ -26,28 +42,74 @@
           <div class="stat-icon">📋</div>
           <div class="stat-info">
             <h3>Total Orders</h3>
-            <div class="stat-value">1,234</div>
-            <div class="stat-change positive">+8.3% from last month</div>
+            <div class="stat-value">{{ totalOrders }}</div>
+            <div class="stat-change positive">Active orders in system</div>
           </div>
         </div>
         
         <div class="stat-card customers">
           <div class="stat-icon">👥</div>
           <div class="stat-info">
-            <h3>Active Customers</h3>
-            <div class="stat-value">567</div>
-            <div class="stat-change positive">+15.2% from last month</div>
+            <h3>Total Customers</h3>
+            <div class="stat-value">{{ totalCustomers }}</div>
+            <div class="stat-change positive">Registered users</div>
           </div>
         </div>
-        
-        <div class="stat-card conversion">
-          <div class="stat-icon">📈</div>
+
+        <div class="stat-card average">
+          <div class="stat-icon">💵</div>
           <div class="stat-info">
-            <h3>Conversion Rate</h3>
-            <div class="stat-value">3.4%</div>
-            <div class="stat-change negative">-0.8% from last month</div>
+            <h3>Avg Order Value</h3>
+            <div class="stat-value">{{ averageOrderValue | currency:'USD':'symbol':'1.2-2' }}</div>
+            <div class="stat-change">Per order average</div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ✅ TOP PRODUCTS TABLE -->
+    <div class="top-products-section" *ngIf="topSellingProducts.length > 0">
+      <h2>🏆 Top Selling Products</h2>
+      <div class="top-products-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Product Name</th>
+              <th>Units Sold</th>
+              <th>Revenue</th>
+              <th>Avg Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let product of topSellingProducts; let i = index" 
+                [class.top-seller]="i === 0">
+              <td>
+                <span class="rank-badge" [class.gold]="i === 0" [class.silver]="i === 1" [class.bronze]="i === 2">
+                  {{ i + 1 }}
+                </span>
+              </td>
+              <td class="product-name">{{ product.productName }}</td>
+              <td class="units-sold">{{ product.totalQuantitySold }}</td>
+              <td class="revenue">{{ product.totalRevenue | currency:'USD':'symbol':'1.2-2' }}</td>
+              <td class="avg-price">{{ (product.totalRevenue / product.totalQuantitySold) | currency:'USD':'symbol':'1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ✅ NO DATA STATE -->
+    <div *ngIf="topSellingProducts.length === 0" class="no-data-container">
+      <div class="no-data-message">
+        <h3>📊 No Sales Data Available</h3>
+        <p>No product sales data found. This could mean:</p>
+        <ul>
+          <li>No orders have been placed yet</li>
+          <li>No products have been sold</li>
+          <li>Data might still be loading</li>
+        </ul>
+        <button (click)="refreshData()" class="refresh-btn">🔄 Refresh Data</button>
       </div>
     </div>
 
@@ -64,14 +126,14 @@
         
         <div class="report-data">
           <div class="data-point" *ngFor="let item of report.data | keyvalue">
-            <span class="data-label">{{ item.key }}:</span>
+            <span class="data-label">{{ item.key | titlecase }}:</span>
             <span class="data-value">{{ item.value }}</span>
           </div>
         </div>
         
         <div class="report-actions">
           <button (click)="generateReport(report.title)" class="btn-generate">
-            🔄 Generate
+            📊 Generate
           </button>
           <button (click)="exportReport(report.title)" class="btn-export">
             📤 Export
@@ -80,46 +142,22 @@
       </div>
     </div>
 
-    <!-- Advanced Analytics -->
-    <div class="advanced-section">
-      <h2>🎯 Advanced Analytics</h2>
-      <div class="analytics-grid">
-        <div class="chart-card">
-          <h3>📊 Sales Trends</h3>
-          <div class="chart-placeholder">
-            <p>Sales chart would go here</p>
-            <div class="mock-chart">
-              <div class="chart-bar" style="height: 60%;"></div>
-              <div class="chart-bar" style="height: 80%;"></div>
-              <div class="chart-bar" style="height: 45%;"></div>
-              <div class="chart-bar" style="height: 90%;"></div>
-              <div class="chart-bar" style="height: 70%;"></div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="chart-card">
-          <h3>🍰 Product Categories</h3>
-          <div class="chart-placeholder">
-            <p>Pie chart would go here</p>
-            <div class="mock-pie">
-              <div class="pie-segment segment-1"></div>
-              <div class="pie-segment segment-2"></div>
-              <div class="pie-segment segment-3"></div>
-              <div class="pie-segment segment-4"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Export Options -->
+    <!-- Export Section -->
     <div class="export-section">
       <h2>📤 Export Options</h2>
       <div class="export-buttons">
-        <button class="export-btn pdf">📄 Export as PDF</button>
-        <button class="export-btn excel">📊 Export as Excel</button>
-        <button class="export-btn csv">📋 Export as CSV</button>
+        <button (click)="exportReport('Sales Report')" class="export-btn pdf">
+          📄 Export Sales Report
+        </button>
+        <button (click)="exportReport('Product Performance')" class="export-btn excel">
+          📊 Export Product Performance
+        </button>
+        <button (click)="exportReport('User Analytics')" class="export-btn csv">
+          👥 Export User Analytics
+        </button>
+        <button (click)="exportReport('Inventory Report')" class="export-btn json">
+          📦 Export Inventory Report
+        </button>
       </div>
     </div>
   </div>

@@ -1,44 +1,42 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router } from '@angular/router';
+import { UserService, UserProfileResponse, UserUpdateRequest } from '../user.service';
 import { AuthService } from '../../auth/auth.service';
-import { UserService, UserProfile, UserUpdateRequest } from '../user.service';
 
 @Component({
   selector: 'app-user-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './user-profile.component.html',
-  styleUrl: './user-profile.component.css'
+  styleUrls: ['./user-profile.component.css']
 })
 export class UserProfileComponent implements OnInit {
-  profileForm: FormGroup;
+  userProfile: UserProfileResponse | null = null;
+  isEditing = false;
   isLoading = true;
   isSaving = false;
-  successMessage = '';
   errorMessage = '';
-  userProfile: UserProfile | null = null;
+  successMessage = '';
+
+  profileForm: FormGroup;
+  originalFormValues: any = {};
 
   constructor(
-    private fb: FormBuilder,
+    private userService: UserService,
     private authService: AuthService,
-    private userService: UserService
+    private router: Router,
+    private fb: FormBuilder
   ) {
     this.profileForm = this.fb.group({
-      email: [{value: '', disabled: true}], // Email readonly, no se envía
-      name: ['', [Validators.required, Validators.minLength(2)]], // Required
-      shippingAddress: [''] // Opcional
+      name: [{value: '', disabled: true}, [Validators.required, Validators.minLength(2)]],
+      email: [{value: '', disabled: true}, [Validators.required, Validators.email]],
+      shippingAddress: [{value: '', disabled: true}]
     });
   }
 
   ngOnInit(): void {
-    if (!this.authService.isLoggedIn()) {
-      this.errorMessage = 'You must be logged in to view your profile.';
-      this.isLoading = false;
-      return;
-    }
-    
     this.loadProfile();
   }
 
@@ -46,91 +44,183 @@ export class UserProfileComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
     
-    console.log('Loading user profile...');
-    
     this.userService.getMyProfile().subscribe({
-      next: (profile) => {
-        console.log('Profile loaded successfully:', profile);
+      next: (profile: UserProfileResponse) => {
         this.userProfile = profile;
         
-        // Cargar datos en el formulario
-        this.profileForm.patchValue({
-          email: profile.email || '',
-          name: profile.name || '',
+        const formData = {
+          name: profile.name,
+          email: profile.email,
           shippingAddress: profile.shippingAddress || ''
-        });
+        };
         
+        this.profileForm.patchValue(formData);
+        this.originalFormValues = { ...formData };
+        // Enable form if it was loaded successfully and user might want to edit
+        // this.toggleEdit(false); // Or based on some other logic
         this.isLoading = false;
       },
-      error: (err) => {
-        console.error('Error loading profile:', err);
-        this.errorMessage = err.message || 'Failed to load profile. Please refresh the page.';
+      error: (err: any) => {
+        this.errorMessage = 'Error loading profile. Please try again.';
         this.isLoading = false;
+        console.error('Error loading profile:', err);
       }
     });
   }
 
-  updateProfile(): void {
+  saveProfile(): void {
     if (this.profileForm.invalid) {
       this.markFormGroupTouched();
-      this.errorMessage = 'Please fill in all required fields correctly.';
       return;
     }
 
     this.isSaving = true;
-    this.successMessage = '';
     this.errorMessage = '';
+    this.successMessage = '';
 
-    const formValue = this.profileForm.getRawValue();
-    
-    // ✅ CORREGIDO: Enviar SIEMPRE name y email como requiere el backend
-    const updateRequest: UserUpdateRequest = {
-      name: formValue.name.trim(), // ✅ SIEMPRE enviar (requerido)
-      email: formValue.email, // ✅ SIEMPRE enviar (requerido, aunque readonly)
-      shippingAddress: formValue.shippingAddress?.trim() || undefined // ✅ Opcional
+    const updateData: UserUpdateRequest = {
+      name: this.profileForm.value.name.trim(),
+      email: this.profileForm.value.email.trim(),
+      shippingAddress: this.profileForm.value.shippingAddress?.trim() || ''
     };
 
-    console.log('Sending update request:', updateRequest);
-
-    this.userService.updateMyProfile(updateRequest).subscribe({
-      next: (updatedProfile) => {
-        console.log('Profile updated successfully:', updatedProfile);
-        this.userProfile = updatedProfile;
-        this.successMessage = 'Profile updated successfully!';
-        this.isSaving = false;
+    this.userService.updateMyProfile(updateData).subscribe({
+      next: (updatedProfile: any) => {
+        if (this.userProfile) {
+          this.userProfile.name = updatedProfile.name || updateData.name;
+          this.userProfile.email = updatedProfile.email || updateData.email;
+          this.userProfile.shippingAddress = updatedProfile.shippingAddress || updateData.shippingAddress;
+        }
         
-        // Actualizar formulario con datos actualizados
-        this.profileForm.patchValue({
-          email: updatedProfile.email || '',
-          name: updatedProfile.name || '',
-          shippingAddress: updatedProfile.shippingAddress || ''
-        });
+        this.originalFormValues = { ...this.profileForm.value };
+        
+        this.successMessage = 'Profile updated successfully';
+        this.isEditing = false;
+        this.toggleEditState(false); // Disable form after saving
+        this.isSaving = false;
         
         setTimeout(() => {
           this.successMessage = '';
         }, 3000);
       },
-      error: (err) => {
-        console.error('Error updating profile:', err);
-        
-        if (err.message) {
-          this.errorMessage = err.message;
-        } else {
-          this.errorMessage = 'Failed to update profile. Please try again.';
-        }
-        
+      error: (err: any) => {
+        this.errorMessage = 'Error updating profile. Please try again.';
         this.isSaving = false;
+        console.error('Error updating profile:', err);
       }
     });
   }
 
+  toggleEdit(): void {
+    this.isEditing = !this.isEditing;
+    this.clearMessages();
+    this.toggleEditState(this.isEditing);
+  }
+
+  private toggleEditState(enable: boolean): void {
+    if (enable) {
+      this.profileForm.get('name')?.enable();
+      this.profileForm.get('email')?.enable();
+      this.profileForm.get('shippingAddress')?.enable();
+    } else {
+      this.profileForm.get('name')?.disable();
+      this.profileForm.get('email')?.disable();
+      this.profileForm.get('shippingAddress')?.disable();
+      if (!this.isEditing) { // If toggling off editing, restore original values
+          this.profileForm.patchValue(this.originalFormValues);
+          this.profileForm.markAsUntouched();
+      }
+    }
+  }
+
+
+  cancelEdit(): void {
+    this.isEditing = false;
+    this.toggleEditState(false);
+    this.profileForm.patchValue(this.originalFormValues);
+    this.profileForm.markAsUntouched();
+    this.clearMessages();
+  }
+
+  // ✅ MÉTODO para validar campos del formulario
+  isFieldInvalid(fieldName: string): boolean {
+    const field = this.profileForm.get(fieldName);
+    return !!(field && field.invalid && (field.dirty || field.touched));
+  }
+
+  // ✅ MÉTODO para obtener errores de campos
+  getFieldError(fieldName: string): string {
+    const field = this.profileForm.get(fieldName);
+    if (field && field.errors && (field.dirty || field.touched)) {
+      if (field.errors['required']) {
+        return `This field is required`;
+      }
+      if (field.errors['email']) {
+        return 'Please enter a valid email';
+      }
+      if (field.errors['minlength']) {
+        return `Must be at least ${field.errors['minlength'].requiredLength} characters`;
+      }
+    }
+    return '';
+  }
+
+  // ✅ MÉTODO para marcar todos los campos como tocados
   private markFormGroupTouched(): void {
     Object.keys(this.profileForm.controls).forEach(key => {
-      this.profileForm.get(key)?.markAsTouched();
+      const control = this.profileForm.get(key);
+      control?.markAsTouched();
     });
   }
 
-  // Getters para validaciones en el template
-  get name() { return this.profileForm.get('name'); }
-  get shippingAddress() { return this.profileForm.get('shippingAddress'); }
+  // ✅ MÉTODO para limpiar mensajes
+  private clearMessages(): void {
+    this.errorMessage = '';
+    this.successMessage = '';
+  }
+
+  // ✅ MÉTODO para solicitar cambio de contraseña
+  requestPasswordReset(): void {
+    if (this.userProfile?.email) {
+      this.authService.requestPasswordReset(this.userProfile.email).subscribe({
+        next: () => {
+          this.successMessage = 'A password reset link has been sent to your email.';
+          setTimeout(() => {
+            this.successMessage = '';
+          }, 5000);
+        },
+        error: (err: any) => {
+          this.errorMessage = 'Error requesting password reset.';
+          console.error('Error requesting password reset:', err);
+        }
+      });
+    }
+  }
+
+  // ✅ MÉTODO para eliminar cuenta
+  deleteAccount(): void {
+    const confirmed = confirm(
+      'Are you sure you want to delete your account? This action cannot be undone.'
+    );
+    
+    if (confirmed) {
+      const doubleConfirmed = confirm(
+        'WARNING: All your data will be permanently deleted. Continue?'
+      );
+      
+      if (doubleConfirmed) {
+        this.userService.deleteMyAccount().subscribe({
+          next: () => {
+            alert('Your account has been successfully deleted.');
+            this.authService.logout();
+            this.router.navigate(['/']);
+          },
+          error: (err: any) => {
+            this.errorMessage = 'Error deleting account.';
+            console.error('Error deleting account:', err);
+          }
+        });
+      }
+    }
+  }
 }

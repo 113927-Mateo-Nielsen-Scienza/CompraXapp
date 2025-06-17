@@ -2,11 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ProductService } from '../product.service';
+import { ProductService, ProductResponse } from '../product.service'; // ✅ Usar ProductResponse
 import { CartService } from '../../cart/cart.service';
-import { AuthService } from '../../auth/auth.service';
+import { AuthService, LoginResponse } from '../../auth/auth.service'; // ✅ Usar LoginResponse
 import { Product } from '../../models/Product';
-import { AuthResponse } from '../../models/User';
 
 @Component({
   selector: 'app-product-list',
@@ -16,10 +15,10 @@ import { AuthResponse } from '../../models/User';
   styleUrl: './product-list.component.css'
 })
 export class ProductListComponent implements OnInit {
-  products: Product[] = [];
-  allProducts: Product[] = []; // Agregar para mantener todos los productos
+  products: ProductResponse[] = []; // ✅ Cambiar tipo
+  allProducts: ProductResponse[] = []; // ✅ Cambiar tipo
   isLoading = true;
-  currentUser: AuthResponse | null = null;
+  currentUser: LoginResponse | null = null; // ✅ Cambiar tipo
   viewMode: 'grid' | 'list' = 'grid';
   searchKeyword = '';
   minPrice?: number;
@@ -44,7 +43,6 @@ export class ProductListComponent implements OnInit {
   loadProducts(): void {
     this.isLoading = true;
     
-    // Usar los parámetros de filtro en la llamada al backend
     this.productService.getProducts(
       this.searchKeyword || undefined,
       this.minPrice,
@@ -72,14 +70,15 @@ export class ProductListComponent implements OnInit {
 
   filterProducts(): void {
     // Filtrar localmente para respuesta más rápida
-    let filtered = [...this.allProducts];
-
+    let filtered = this.allProducts;
+    
     // Filtro por palabra clave
     if (this.searchKeyword && this.searchKeyword.trim()) {
       const keyword = this.searchKeyword.toLowerCase().trim();
       filtered = filtered.filter(product => 
         product.name.toLowerCase().includes(keyword) ||
-        product.description.toLowerCase().includes(keyword)
+        // ✅ CORREGIR: Verificar si description existe
+        (product.description && product.description.toLowerCase().includes(keyword))
       );
     }
 
@@ -107,32 +106,25 @@ export class ProductListComponent implements OnInit {
     this.viewMode = mode;
   }
 
-  addToCart(product: Product): void {
-    if (!this.currentUser) {
+  addToCart(product: ProductResponse, quantity: number = 1): void {
+    if (!this.authService.isLoggedIn()) {
       this.router.navigate(['/auth/login']);
       return;
     }
 
-    const cartItem = {
-      productId: product.id,
-      quantity: 1,
-      productName: product.name,
-      productPrice: product.price,
-      imageUrl: product.imageUrl
-    };
-
-    this.cartService.addItemToCart(cartItem).subscribe({
+    // ✅ Usar método corregido
+    this.cartService.addItemToCart(product.id, quantity).subscribe({
       next: (cart) => {
-        this.showNotification(`${product.name} added to cart!`, 'success');
+        console.log('Product added to cart successfully');
+        // Mostrar feedback al usuario
       },
       error: (err) => {
-        console.error("Failed to add to cart", err);
-        this.showNotification('Failed to add product to cart', 'error');
+        console.error('Error adding product to cart:', err);
       }
     });
   }
 
-  viewProduct(product: Product): void {
+  viewProduct(product: ProductResponse): void {
     this.router.navigate(['/products', product.id]);
   }
 

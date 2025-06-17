@@ -99,7 +99,7 @@ export class VerifyAccountComponent implements OnInit, OnDestroy {
       code: this.verifyForm.value.code
     };
 
-    this.authService.verifyAccount(verificationData).subscribe({
+    this.authService.verify(verificationData).subscribe({
       next: (response) => {
         this.isLoading = false;
         this.successMessage = response.message + " Redirigiendo al login...";

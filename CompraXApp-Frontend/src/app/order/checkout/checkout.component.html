@@ -10,19 +10,24 @@
     <div class="order-summary">
       <h3>Order Summary</h3>
       <div class="cart-items">
-        <div *ngFor="let item of cart.items" class="cart-item">
-          <span>{{ item.productName }}</span>
-          <span>Qty: {{ item.quantity }}</span>
-          <span>${{ (item.pricePerUnit * item.quantity).toFixed(2) }}</span>
+        <!-- ✅ FIX: Agregar estructura correcta con espacios -->
+        <div class="order-item" *ngFor="let item of cart.items">
+          <div class="item-info">
+            <span class="item-name">{{ item.productName }}</span>
+            <span class="item-quantity">x{{ item.quantity }}</span>
+          </div>
+          <span class="item-price">${{ (item.quantity * item.pricePerUnit) | number:'1.2-2' }}</span>
         </div>
       </div>
       <div class="total">
-        <strong>Total: ${{ calculateTotal().toFixed(2) }}</strong>
+        <strong>Total: ${{ getTotal() | number:'1.2-2' }}</strong>
       </div>
     </div>
 
     <!-- Checkout Form -->
     <form [formGroup]="checkoutForm" (ngSubmit)="placeOrder()" class="checkout-form">
+      <h3>Shipping Information</h3>
+      
       <div class="form-group">
         <label for="shippingAddress">Shipping Address *</label>
         <textarea 
@@ -39,23 +44,6 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label for="paymentMethod">Payment Method *</label>
-        <select 
-          id="paymentMethod"
-          formControlName="paymentMethod"
-          [class.error]="isFieldInvalid('paymentMethod')">
-          <option value="MERCADOPAGO">MercadoPago</option>
-          <option value="WHATSAPP">WhatsApp Payment</option>
-        </select>
-        <div *ngIf="isFieldInvalid('paymentMethod')" class="error-message">
-          {{ getFieldError('paymentMethod') }}
-        </div>
-        <div *ngIf="validationErrors['paymentMethod']" class="error-message">
-          {{ validationErrors['paymentMethod'] }}
-        </div>
-      </div>
-
       <div *ngIf="errorMessage" class="alert alert-danger">
         {{ errorMessage }}
       </div>
@@ -64,8 +52,8 @@
         type="submit"
         [disabled]="checkoutForm.invalid || isSubmitting || !hasItems()"
         class="btn btn-primary">
-        <span *ngIf="isSubmitting">Placing Order...</span>
-        <span *ngIf="!isSubmitting">Place Order</span>
+        <span *ngIf="isSubmitting">Processing...</span>
+        <span *ngIf="!isSubmitting">Continue to Payment</span>
       </button>
     </form>
   </div>

@@ -2,7 +2,7 @@
   <app-navbar></app-navbar>
   
   <main class="main-content">
-    <div class="container">
+    <div class="container"> <!-- Ensure this container class is styled globally or locally if needed -->
       <router-outlet></router-outlet>
     </div>
   </main>
@@ -10,7 +10,7 @@
   <footer class="app-footer">
     <div class="footer-content">
       <div class="footer-section">
-        <h3>CompraXApp</h3>
+        <h3>CompraXApp</h3> <!-- Brand Name - Assuming to keep -->
         <p>Your trusted online shopping destination. Discover amazing products with secure payments and fast delivery.</p>
       </div>
       
@@ -18,8 +18,7 @@
         <h4>Quick Links</h4>
         <ul>
           <li><a routerLink="/products">🛍️ Products</a></li>
-          <li><a routerLink="/auth/login">🔐 Login</a></li>
-          <li><a routerLink="/auth/register">✨ Sign Up</a></li>
+       
           <li><a routerLink="/cart">🛒 Shopping Cart</a></li>
         </ul>
       </div>
@@ -37,16 +36,16 @@
       <div class="footer-section">
         <h4>Follow Us</h4>
         <div class="social-links">
-          <a href="https://facebook.com" target="_blank" aria-label="Facebook">📘</a>
-          <a href="https://twitter.com" target="_blank" aria-label="Twitter">🐦</a>
-          <a href="https://instagram.com" target="_blank" aria-label="Instagram">📷</a>
-          <a href="https://linkedin.com" target="_blank" aria-label="LinkedIn">💼</a>
+          <a href="https://facebook.com" target="_blank" aria-label="Facebook" class="social-icon">📘</a>
+          <a href="https://twitter.com" target="_blank" aria-label="Twitter" class="social-icon">🐦</a>
+          <a href="https://instagram.com" target="_blank" aria-label="Instagram" class="social-icon">📷</a>
+          <a href="https://linkedin.com" target="_blank" aria-label="LinkedIn" class="social-icon">💼</a>
         </div>
       </div>
     </div>
     
     <div class="footer-bottom">
-      <p>&copy; {{ currentYear }} CompraXApp. All rights reserved. Made with ❤️ for amazing shopping experiences.</p>
+      <p>&copy; {{ currentYear }} CompraXApp. All rights reserved.</p>
     </div>
   </footer>
 </div>

@@ -1,0 +1,79 @@
+<div class="payment-method-container">
+  <div class="payment-header">
+    <h1>💳 Choose Your Payment Method</h1>
+    <p>Select how you want to complete your purchase securely</p>
+  </div>
+
+  <!-- ✅ FIX: Order Summary con espaciado correcto -->
+  <div class="order-summary">
+    <h3>📦 Order Summary</h3>
+    <div class="order-items">
+      <div class="order-item" *ngFor="let item of cartItems">
+        <div class="item-info">
+          <span class="item-name">{{ item.productName }}</span>
+          <span class="item-quantity">x{{ item.quantity }}</span>
+        </div>
+        <span class="item-price">${{ (item.pricePerUnit * item.quantity) | number:'1.2-2' }}</span>
+      </div>
+    </div>
+    <div class="order-total">
+      <div class="total-row">
+        <span class="total-label"><strong>Total:</strong></span>
+        <span class="total-amount"><strong>${{ total | number:'1.2-2' }}</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment Methods -->
+  <div class="payment-methods">
+    <div class="payment-method mercadopago-method" (click)="selectMercadoPago()">
+      <div class="method-content">
+        <div class="method-icon">
+          💳
+        </div>
+        <div class="method-details">
+          <h3 class="method-title">MercadoPago</h3>
+          <p class="method-description">Pay securely with credit/debit card or digital wallet</p>
+          <div class="method-features">
+            <span class="feature-tag">Instant</span>
+            <span class="feature-tag">Secure</span>
+            <span class="feature-tag">Protected</span>
+          </div>
+          <div class="method-processing-time">Processing: Immediate</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="payment-method whatsapp-method" (click)="selectWhatsAppPayment()">
+      <div class="method-content">
+        <div class="method-icon">
+          📱
+        </div>
+        <div class="method-details">
+          <h3 class="method-title">WhatsApp Coordination</h3>
+          <p class="method-description">Contact the seller directly to arrange payment and delivery</p>
+          <div class="method-features">
+            <span class="feature-tag">Flexible</span>
+            <span class="feature-tag">Personal</span>
+            <span class="feature-tag">Direct</span>
+          </div>
+          <div class="method-processing-time">Processing: Coordinated</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="continue-section">
+    <div class="security-info">
+      <h3>🔒 Your Security is Our Priority</h3>
+      <p>All payment methods use industry-standard encryption to protect your information.</p>
+    </div>
+  </div>
+
+  <div class="payment-actions">
+    <button class="btn-secondary" (click)="goBack()">
+      <i class="fas fa-arrow-left"></i>
+      Back to Checkout
+    </button>
+  </div>
+</div>

@@ -1,16 +1,10 @@
-export interface User {
-  id?: number;
-  email?: string;
-  // otros campos del usuario
-  roles?: string[]; // O como sea que el backend envíe los roles ahora
-  authorities?: Array<{ authority: string }>; // Si Spring Security envía así los roles
-}
+export type { 
+  User, 
+  UserUpdateRequest, 
+  UserProfileResponse 
+} from '../user/user.service';
 
-export interface AuthResponse {
-  id?: number;
-  email?: string;
-  username?: string; 
-  roles?: string[];
-  message?: string;
-  authorities?: Array<{ authority: string }>;
-}
+export type AuthResponse = LoginResponse;
+import type { LoginResponse } from '../auth/auth.service';
+
+

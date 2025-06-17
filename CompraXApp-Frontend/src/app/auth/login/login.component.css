@@ -1,6 +1,15 @@
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary-bg) 0%, var(--secondary-bg) 100%);
+  padding: var(--spacing-4);
+}
+
 .login-container {
   max-width: 400px;
-  margin: 0 auto;
+  width: 100%;
   padding: var(--spacing-8);
   background: white;
   border-radius: var(--border-radius-xl);
@@ -26,7 +35,7 @@
   gap: var(--spacing-6);
 }
 
-.login-container div {
+.form-group {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-2);
@@ -40,11 +49,14 @@
 
 .login-container input {
   padding: var(--spacing-3) var(--spacing-4);
-  border: 1px solid var(--gray-300);
+  border: 2px solid var(--gray-300);
   border-radius: var(--border-radius);
   font-size: var(--font-size-base);
   transition: all var(--transition-fast);
   background: white;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
 }
 
 .login-container input:focus {
@@ -54,8 +66,13 @@
   transform: translateY(-1px);
 }
 
-.login-container input:invalid {
+.login-container input:hover:not(:focus) {
+  border-color: var(--gray-400);
+}
+
+.login-container input.error {
   border-color: var(--danger-color);
+  background-color: #fef2f2;
 }
 
 .login-container small {
@@ -76,6 +93,8 @@
   transition: all var(--transition-normal);
   position: relative;
   overflow: hidden;
+  margin-top: var(--spacing-4);
+  min-height: 48px;
 }
 
 .login-container button:hover:not(:disabled) {
@@ -87,9 +106,10 @@
   background: var(--gray-400);
   cursor: not-allowed;
   transform: none;
+  opacity: 0.7;
 }
 
-.login-container button:active {
+.login-container button:active:not(:disabled) {
   transform: translateY(0);
 }
 
@@ -104,23 +124,65 @@
   text-align: center;
 }
 
-.login-container p {
+/* ✅ FIX: Auth footer styles */
+.auth-footer {
   text-align: center;
   margin-top: var(--spacing-6);
+  padding-top: var(--spacing-4);
+  border-top: 1px solid var(--gray-200);
+}
+
+.auth-footer p {
   color: var(--gray-600);
   font-size: var(--font-size-sm);
+  margin: 0;
 }
 
-.login-container p a {
+/* ✅ FIX: Auth link styles with proper clickability */
+.auth-link {
   color: var(--primary-color);
-  text-decoration: none;
+  text-decoration: underline;
   font-weight: 600;
-  transition: color var(--transition-fast);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline;
+  position: relative;
+  z-index: 100;
 }
 
-.login-container p a:hover {
+.auth-link:hover {
   color: var(--primary-dark);
   text-decoration: underline;
+  transform: translateY(-1px);
+}
+
+.auth-link:active {
+  color: var(--primary-darker);
+  transform: translateY(0);
+}
+
+.auth-link:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ✅ HIDE: One of the duplicate links */
+.auth-footer a.auth-link {
+  display: inline;
+}
+
+.auth-footer span.auth-link {
+  display: none;
+}
+
+/* ✅ FALLBACK: Show span if routerLink fails */
+.auth-footer a.auth-link:not([href]) {
+  display: none;
+}
+
+.auth-footer a.auth-link:not([href]) + span.auth-link {
+  display: inline;
 }
 
 /* Loading state */
@@ -146,13 +208,28 @@
 }
 
 /* Responsive */
+@media (max-width: 768px) {
+  .auth-wrapper {
+    padding: var(--spacing-2);
+  }
+  
+  .login-container {
+    padding: var(--spacing-6);
+  }
+  
+  .login-container input {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: var(--spacing-4);
+  }
+}
+
 @media (max-width: 480px) {
   .login-container {
-    margin: var(--spacing-4);
-    padding: var(--spacing-6);
+    padding: var(--spacing-4);
   }
   
   .login-container h2 {
     font-size: var(--font-size-xl);
+    margin-bottom: var(--spacing-6);
   }
 }

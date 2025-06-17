@@ -1,111 +1,148 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
-import { Cart, CartItem } from '../models/Cart';
-import { AuthService } from '../auth/auth.service'; 
+import { tap, catchError } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
+import { AuthService } from '../auth/auth.service';
+import { Router } from '@angular/router';
+
+// ✅ INTERFACES EXACTAS según backend
+export interface CartDTO {
+  id: number;
+  items: CartItemDTO[];
+  totalAmount: number;
+}
+
+export interface CartItemDTO {
+  id: number;
+  productId: number;
+  productName: string;
+  quantity: number;
+  pricePerUnit: number;
+}
 
 @Injectable({
   providedIn: 'root' 
 })
 export class CartService {
-  private apiUrl = 'http://localhost:8080/api/cart';
-  private cartSubject = new BehaviorSubject<Cart | null>(null);
+  private apiUrl = `${environment.apiUrl}/cart`;
+  private cartSubject = new BehaviorSubject<CartDTO | null>(null);
   public cart$ = this.cartSubject.asObservable();
 
-  constructor(private http: HttpClient, private authService: AuthService) { }
+  constructor(
+    private http: HttpClient, 
+    private authService: AuthService,
+    private router: Router
+  ) { }
 
-  getCart(): Observable<Cart> {
+  // ✅ ENDPOINT EXACTO: GET /api/cart
+  getCart(): Observable<CartDTO> {
     if (!this.authService.isLoggedIn()) {
       return throwError(() => new Error('User not logged in.'));
     }
-    return this.http.get<Cart>(this.apiUrl, { withCredentials: true }).pipe(
+    return this.http.get<CartDTO>(this.apiUrl).pipe(
       tap(cart => {
         console.log('Cart loaded:', cart);
         this.cartSubject.next(cart);
       }),
-      catchError(this.handleError)
+      catchError(this.handleError.bind(this))
     );
   }
 
-  addItemToCart(item: { productId: number, quantity: number, productName: string, productPrice: number, imageUrl?: string }): Observable<Cart> {
+  // ✅ ENDPOINT EXACTO: POST /api/cart/items?productId={}&quantity={}
+  addItemToCart(productId: number, quantity: number): Observable<CartDTO> {
     if (!this.authService.isLoggedIn()) {
       return throwError(() => new Error('User not logged in.'));
     }
 
     const params = new HttpParams()
-      .set('productId', item.productId.toString())
-      .set('quantity', item.quantity.toString());
+      .set('productId', productId.toString())
+      .set('quantity', quantity.toString());
 
-    return this.http.post<Cart>(`${this.apiUrl}/items`, null, { 
-      params, 
-      withCredentials: true 
-    }).pipe(
+    return this.http.post<CartDTO>(`${this.apiUrl}/items`, null, { params }).pipe(
       tap(cart => {
         console.log('Item added to cart:', cart);
         this.cartSubject.next(cart);
       }),
-      catchError(this.handleError)
+      catchError(this.handleError.bind(this))
     );
   }
 
-  updateCartItem(productId: number, quantity: number): Observable<Cart> {
+  // ✅ ENDPOINT EXACTO: PUT /api/cart/items/{productId}?quantity={}
+  updateCartItem(productId: number, quantity: number): Observable<CartDTO> {
     if (!this.authService.isLoggedIn()) {
       return throwError(() => new Error('User not logged in.'));
     }
 
     const params = new HttpParams().set('quantity', quantity.toString());
 
-    return this.http.put<Cart>(`${this.apiUrl}/items/${productId}`, null, { 
-      params, 
-      withCredentials: true 
-    }).pipe(
+    return this.http.put<CartDTO>(`${this.apiUrl}/items/${productId}`, null, { params }).pipe(
       tap(cart => {
         console.log('Cart item updated:', cart);
         this.cartSubject.next(cart);
       }),
-      catchError(this.handleError)
+      catchError(this.handleError.bind(this))
     );
   }
 
-  removeCartItem(productId: number): Observable<Cart> {
+  // ✅ ENDPOINT EXACTO: DELETE /api/cart/items/{productId}
+  removeCartItem(productId: number): Observable<CartDTO> {
     if (!this.authService.isLoggedIn()) {
       return throwError(() => new Error('User not logged in.'));
     }
-    return this.http.delete<Cart>(`${this.apiUrl}/items/${productId}`, { withCredentials: true }).pipe(
+
+    return this.http.delete<CartDTO>(`${this.apiUrl}/items/${productId}`).pipe(
       tap(cart => {
         console.log('Item removed from cart:', cart);
         this.cartSubject.next(cart);
       }),
-      catchError(this.handleError)
+      catchError(this.handleError.bind(this))
     );
   }
 
-  clearCart(): Observable<Cart> { 
+  // ✅ ENDPOINT EXACTO: DELETE /api/cart
+  clearCart(): Observable<void> {
     if (!this.authService.isLoggedIn()) {
       return throwError(() => new Error('User not logged in.'));
     }
-    return this.http.delete<Cart>(this.apiUrl, { withCredentials: true }).pipe( 
-      tap(cart => {
-        console.log('Cart cleared:', cart);
-        this.cartSubject.next(cart);
+
+    return this.http.delete<void>(this.apiUrl).pipe(
+      tap(() => {
+        console.log('Cart cleared');
+        this.cartSubject.next(null);
       }),
-      catchError(this.handleError)
+      catchError(this.handleError.bind(this))
     );
   }
 
-  getCurrentCartValue(): Cart | null {
+  getCurrentCartValue(): CartDTO | null {
     return this.cartSubject.value;
   }
 
-  // Método helper para calcular total localmente si es necesario
-  calculateCartTotal(cart: Cart | null): number {
-    if (!cart || !cart.items) return 0;
-    return cart.items.reduce((total, item) => total + (item.pricePerUnit * item.quantity), 0);
+  getTotal(): number {
+    const cart = this.getCurrentCartValue();
+    return cart?.totalAmount || 0;
   }
 
-  private handleError(error: any) {
-    console.error('CartService error:', error);
-    return throwError(() => error);
+  calculateCartTotal(cart: CartDTO | null): number {
+    if (!cart?.items) return 0;
+    return cart.items.reduce((total, item) => total + (item.quantity * item.pricePerUnit), 0);
+  }
+
+  private handleError(error: HttpErrorResponse) {
+    let errorMessage = 'Cart error';
+    
+    if (error.status === 401) {
+      this.authService.logout();
+      return throwError(() => new Error('Session expired. Please log in again.'));
+    }
+    
+    if (error.error?.message) {
+      errorMessage = error.error.message;
+    } else if (error.error?.error) {
+      errorMessage = error.error.error;
+    }
+    
+    return throwError(() => new Error(errorMessage));
   }
 }

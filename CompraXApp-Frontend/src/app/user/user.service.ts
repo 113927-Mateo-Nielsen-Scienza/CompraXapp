@@ -2,91 +2,123 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
-export interface UserProfile {
+// ✅ INTERFACES EXACTAS según backend
+export interface User {
   id: number;
   name: string;
   email: string;
   shippingAddress?: string;
-  createdAt?: Date;
-  roles?: any[];
+  roles: string[];
+  active: boolean;
+  enabled: boolean;
 }
 
 export interface UserUpdateRequest {
-  name: string;        // ← REQUERIDO (como en backend)
-  email: string;       // ← REQUERIDO (como en backend)
-  shippingAddress?: string; // ← Opcional
+  name: string;        // REQUERIDO
+  email: string;       // REQUERIDO  
+  shippingAddress?: string; // OPCIONAL
+}
+
+export interface UserProfileResponse {
+  id: number;
+  name: string;
+  email: string;
+  shippingAddress?: string;
+  roles: string[];
+  purchaseHistory: OrderDTO[];
+}
+
+// ✅ Importar OrderDTO del OrderService
+interface OrderDTO {
+  id: number;
+  userId: number;
+  userName: string;
+  orderDate: string;
+  status: string;
+  shippingStatus: string;
+  totalAmount: number;
+  shippingAddress: string;
+  trackingNumber?: string;
+  shippingDate?: string;
+  deliveryDate?: string;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
-  private apiUrl = 'http://localhost:8080/api/users';
+  private apiUrl = `${environment.apiUrl}/users`;
 
   constructor(private http: HttpClient) { }
 
-  // Obtener perfil del usuario actual
-  getMyProfile(): Observable<UserProfile> {
-    console.log('UserService - Getting profile from:', `${this.apiUrl}/me`);
-    
-    return this.http.get<UserProfile>(`${this.apiUrl}/me`, { 
-      withCredentials: true 
-    }).pipe(
-      catchError(this.handleError)
-    );
+  // ✅ ENDPOINT EXACTO: GET /api/users/me
+  getMyProfile(): Observable<UserProfileResponse> {
+    return this.http.get<UserProfileResponse>(`${this.apiUrl}/me`, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
   }
 
-  // Actualizar perfil del usuario actual
-  updateMyProfile(updateRequest: UserUpdateRequest): Observable<UserProfile> {
-    console.log('UserService - Updating profile with:', updateRequest);
-    
-    return this.http.put<UserProfile>(`${this.apiUrl}/me`, updateRequest, { 
+  // ✅ ENDPOINT EXACTO: PUT /api/users/me
+  updateMyProfile(updateRequest: UserUpdateRequest): Observable<UserProfileResponse> {
+    return this.http.put<UserProfileResponse>(`${this.apiUrl}/me`, updateRequest, {
       withCredentials: true,
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    }).pipe(
-      catchError(this.handleError)
-    );
+      headers: { 'Content-Type': 'application/json' }
+    }).pipe(catchError(this.handleError));
+  }
+
+  // ✅ ENDPOINT EXACTO: DELETE /api/users/me
+  deleteMyAccount(): Observable<{message: string}> {
+    return this.http.delete<{message: string}>(`${this.apiUrl}/me`, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  // ✅ ENDPOINT EXACTO: GET /api/users/me/purchase-history
+  getMyPurchaseHistory(): Observable<OrderDTO[]> {
+    return this.http.get<OrderDTO[]>(`${this.apiUrl}/me/purchase-history`, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  // ✅ MÉTODOS ADMIN - endpoints exactos
+  getUserById(id: number): Observable<UserProfileResponse> {
+    return this.http.get<UserProfileResponse>(`${this.apiUrl}/${id}`, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  updateUser(id: number, updateRequest: UserUpdateRequest): Observable<User> {
+    return this.http.put<User>(`${this.apiUrl}/${id}`, updateRequest, {
+      withCredentials: true,
+      headers: { 'Content-Type': 'application/json' }
+    }).pipe(catchError(this.handleError));
+  }
+
+  deleteUser(id: number): Observable<{message: string}> {
+    return this.http.delete<{message: string}>(`${this.apiUrl}/${id}`, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
+  }
+
+  getAllUsers(): Observable<User[]> {
+    return this.http.get<User[]>(this.apiUrl, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError));
   }
 
   private handleError(error: HttpErrorResponse) {
-    console.error('UserService error:', error);
-    console.error('Error status:', error.status);
-    console.error('Error message:', error.message);
+    let errorMessage = 'Error en el servicio de usuario';
     
-    if (error.error) {
-      console.error('Error response body:', error.error);
-    }
-    
-    let userMessage = 'An error occurred';
-    
-    if (error.status === 0) {
-      userMessage = 'Cannot connect to server. Please check your internet connection.';
-    } else if (error.status === 401) {
-      userMessage = 'You are not authorized. Please log in again.';
-    } else if (error.status === 403) {
-      userMessage = 'You do not have permission to access this resource.';
-    } else if (error.status === 404) {
-      userMessage = 'Profile not found.';
-    } else if (error.status === 400) {
-      // Manejar errores de validación del backend
-      if (error.error?.message) {
-        userMessage = error.error.message;
-      } else {
-        userMessage = 'Invalid data provided. Please check your input.';
-      }
-    } else if (error.status === 500) {
-      userMessage = 'Server error. Please try again later.';
+    if (error.status === 401) {
+      errorMessage = 'No autorizado';
     } else if (error.error?.message) {
-      userMessage = error.error.message;
+      errorMessage = error.error.message;
+    } else if (error.error?.error) {
+      errorMessage = error.error.error;
     }
     
-    // Crear un error personalizado con mensaje amigable
-    const customError = new Error(userMessage);
-    (customError as any).originalError = error;
-    
-    return throwError(() => customError);
+    return throwError(() => new Error(errorMessage));
   }
 }

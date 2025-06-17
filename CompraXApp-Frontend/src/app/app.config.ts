@@ -1,14 +1,15 @@
-import { ApplicationConfig, importProvidersFrom } from '@angular/core';
+import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-
+import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
+import { credentialsInterceptor } from './interceptors/credentials.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
-    importProvidersFrom(FormsModule, ReactiveFormsModule),
-    provideHttpClient()
+    provideClientHydration(withEventReplay()),
+    provideHttpClient(withFetch(), withInterceptors([credentialsInterceptor]))
   ]
 };

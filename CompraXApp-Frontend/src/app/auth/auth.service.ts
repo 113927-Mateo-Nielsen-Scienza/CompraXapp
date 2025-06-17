@@ -3,8 +3,28 @@ import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, BehaviorSubject, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
-import { User, AuthResponse } from '../models/User';
 import { Router } from '@angular/router';
+import { environment } from '../../environments/environment';
+
+// ✅ INTERFACES EXACTAS según backend
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface SignupRequest {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  message: string;
+  email: string;
+  name: string;
+  roles: string[];
+  sessionId: string;
+}
 
 export interface VerificationRequest {
   email: string;
@@ -19,9 +39,9 @@ export interface MessageResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8080/api/auth';
-  private currentUserSubject: BehaviorSubject<any | null>;
-  public currentUser: Observable<any | null>;
+  private apiUrl = `${environment.apiUrl}/auth`;
+  private currentUserSubject: BehaviorSubject<LoginResponse | null>;
+  public currentUser: Observable<LoginResponse | null>;
   private isBrowser: boolean;
 
   constructor(
@@ -30,39 +50,22 @@ export class AuthService {
     private router: Router
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
-    let initialUser: any | null = null;
-    if (this.isBrowser) {
-      const storedUser = localStorage.getItem('currentUser');
-      try {
-        initialUser = storedUser ? JSON.parse(storedUser) : null;
-      } catch (e) {
-        initialUser = null;
-        localStorage.removeItem('currentUser');
-      }
-    }
-    this.currentUserSubject = new BehaviorSubject<any | null>(initialUser);
+    const storedUser = this.isBrowser ? localStorage.getItem('currentUser') : null;
+    this.currentUserSubject = new BehaviorSubject<LoginResponse | null>(
+      storedUser ? JSON.parse(storedUser) : null
+    );
     this.currentUser = this.currentUserSubject.asObservable();
   }
 
-  public get currentUserValue(): any | null {
-    return this.currentUserSubject.value;
+  // ✅ ENDPOINT EXACTO: POST /api/auth/signup
+  register(userData: SignupRequest): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.apiUrl}/signup`, userData)
+      .pipe(catchError(this.handleError));
   }
 
-  register(userData: any): Observable<any> {
-    // No guardar en localStorage para registro, solo retornar la respuesta
-    return this.http.post<any>(`${this.apiUrl}/signup`, userData);
-  }
-
-  verifyAccount(verificationData: VerificationRequest): Observable<MessageResponse> {
-    return this.http.post<MessageResponse>(`${this.apiUrl}/verify-account`, verificationData)
-      .pipe(
-        catchError(this.handleError)
-      );
-  }
-
-  login(credentials: any): Observable<any> {
-    // Importante: withCredentials: true para cookies de sesión
-    return this.http.post<any>(`${this.apiUrl}/signin`, credentials, { withCredentials: true }).pipe(
+  // ✅ ENDPOINT EXACTO: POST /api/auth/signin
+  login(credentials: LoginRequest): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/signin`, credentials).pipe(
       tap(response => {
         if (this.isBrowser) {
           localStorage.setItem('currentUser', JSON.stringify(response));
@@ -73,17 +76,39 @@ export class AuthService {
     );
   }
 
+  // ✅ ENDPOINT EXACTO: POST /api/auth/verify-account
+  verify(verificationData: VerificationRequest): Observable<MessageResponse> {
+    return this.verifyAccount(verificationData);
+  }
+
+  verifyAccount(verificationData: VerificationRequest): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.apiUrl}/verify-account`, verificationData)
+      .pipe(catchError(this.handleError));
+  }
+
+  // ✅ ENDPOINT EXACTO: POST /api/auth/logout
   logout(): void {
-    // Llamar al endpoint de logout del backend
-    this.http.post(`${this.apiUrl}/logout`, {}, { withCredentials: true }).subscribe({
+    this.http.post(`${this.apiUrl}/logout`, {}).subscribe({
       next: () => {
         this.clearUserData();
       },
       error: () => {
-        // Limpiar datos locales incluso si hay error en el server
+        // Limpiar datos locales incluso si falla la request
         this.clearUserData();
       }
     });
+  }
+
+  // ✅ ENDPOINT EXACTO: POST /api/auth/password-reset-request
+  requestPasswordReset(email: string): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.apiUrl}/password-reset-request`, { email })
+      .pipe(catchError(this.handleError));
+  }
+
+  // ✅ ENDPOINT EXACTO: POST /api/auth/reset-password
+  resetPassword(token: string, newPassword: string): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.apiUrl}/reset-password?token=${token}&newPassword=${newPassword}`, {})
+      .pipe(catchError(this.handleError));
   }
 
   private clearUserData(): void {
@@ -95,24 +120,31 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    return !!this.currentUserValue;
+    return this.currentUserSubject.value !== null;
   }
 
   isAdmin(): boolean {
-    return this.isLoggedIn() && (
-      this.currentUserValue?.roles?.includes('ROLE_ADMIN') || 
-      this.currentUserValue?.authorities?.some((auth: { authority: string; }) => auth.authority === 'ROLE_ADMIN')
-    );
+    const user = this.currentUserSubject.value;
+    return user?.roles?.includes('ROLE_ADMIN') || false;
+  }
+
+  getCurrentUser(): LoginResponse | null {
+    return this.currentUserSubject.value;
+  }
+
+  get currentUserValue(): LoginResponse | null {
+    return this.currentUserSubject.value;
   }
 
   private handleError(error: HttpErrorResponse) {
-    let errorMessage = 'Ocurrió un error desconocido.';
-    if (error.error instanceof ErrorEvent) {
-      errorMessage = `Error: ${error.error.message}`;
-    } else {
-      errorMessage = `Error Code: ${error.status}\nMessage: ${error.error?.message || error.message}`;
+    let errorMessage = 'Error desconocido';
+    if (error.error?.message) {
+      errorMessage = error.error.message;
+    } else if (error.error?.error) {
+      errorMessage = error.error.error;
+    } else if (error.message) {
+      errorMessage = error.message;
     }
-    console.error(errorMessage);
-    return throwError(() => new Error(error.error?.message || errorMessage));
+    return throwError(() => new Error(errorMessage));
   }
 }

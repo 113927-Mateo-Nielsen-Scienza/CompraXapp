@@ -4,15 +4,7 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../admin.service';
 import { AuthService } from '../../auth/auth.service';
-
-interface User {
-  id: number;
-  email: string;
-  username: string;
-  enabled: boolean;
-  createdAt: Date;
-  roles: { name: string }[];
-}
+import { UserDTO } from '../admin.service';
 
 @Component({
   selector: 'app-admin-users',
@@ -22,10 +14,11 @@ interface User {
   styleUrl: './admin-users.component.css'
 })
 export class AdminUsersComponent implements OnInit {
-  users: User[] = [];
+  users: UserDTO[] = [];
   isLoading = true;
+  errorMessage = '';
   searchKeyword = '';
-  
+
   constructor(
     private adminService: AdminService,
     private authService: AuthService
@@ -38,77 +31,116 @@ export class AdminUsersComponent implements OnInit {
   loadUsers(): void {
     this.isLoading = true;
     this.adminService.getAllUsers().subscribe({
-      next: (users) => {
-        this.users = users;
+      next: (users: UserDTO[]) => {
+        // ✅ FIX: Normalizar roles para asegurarnos de que sean arrays de strings
+        this.users = users.map(user => ({
+          ...user,
+          roles: this.normalizeRoles(user.roles)
+        }));
         this.isLoading = false;
+        console.log('✅ Users loaded:', this.users);
       },
-      error: (err) => {
-        console.error('Error loading users:', err);
+      error: (err: any) => {
+        this.errorMessage = 'Error loading users';
         this.isLoading = false;
+        console.error('❌ Error loading users:', err);
       }
     });
   }
 
-  toggleUserRole(user: User, roleName: string): void {
-    const hasRole = user.roles.some(role => role.name === roleName);
-    let newRoles: string[];
+  // ✅ FIX: Normalizar roles independientemente del formato que venga del backend
+  private normalizeRoles(roles: any): string[] {
+    if (!roles) return [];
     
-    if (hasRole) {
-      // Remover rol
-      newRoles = user.roles
-        .filter(role => role.name !== roleName)
-        .map(role => role.name);
-    } else {
-      // Agregar rol
-      newRoles = [...user.roles.map(role => role.name), roleName];
+    if (Array.isArray(roles)) {
+      return roles.map(role => {
+        if (typeof role === 'string') {
+          return role;
+        } else if (typeof role === 'object' && role.name) {
+          return role.name; // Si es un objeto con propiedad 'name'
+        } else if (typeof role === 'object' && role.authority) {
+          return role.authority; // Si es un objeto con propiedad 'authority'
+        } else {
+          return String(role); // Convertir a string como último recurso
+        }
+      });
     }
+    
+    return [String(roles)]; // Si no es array, convertir a array de un elemento
+  }
 
-    if (roleName === 'ROLE_ADMIN' && hasRole) {
-      if (!confirm('Are you sure you want to remove admin privileges from this user?')) {
-        return;
-      }
-    }
+  // ✅ FIX: Método seguro para formatear roles
+  formatRole(role: any): string {
+    const roleStr = typeof role === 'string' ? role : String(role);
+    return roleStr.replace('ROLE_', '');
+  }
 
+  // ✅ FIX: Método seguro para obtener clase CSS de rol
+  getRoleClass(role: any): string {
+    const roleStr = typeof role === 'string' ? role : String(role);
+    const cleanRole = roleStr.toLowerCase().replace('role_', '');
+    return `role-${cleanRole}`;
+  }
+
+  updateUserRoles(user: UserDTO, newRoles: string[]): void {
     this.adminService.updateUserRoles(user.id, newRoles).subscribe({
       next: () => {
-        this.loadUsers(); // Recargar para mostrar cambios
+        user.roles = newRoles;
+        console.log('✅ User roles updated successfully');
       },
-      error: (err) => {
-        alert('Failed to update user roles: ' + (err.error?.error || 'Please try again'));
-        console.error('Error updating roles:', err);
+      error: (err: any) => {
+        console.error('❌ Error updating user roles:', err);
       }
     });
   }
 
-  deleteUser(user: User): void {
-    if (confirm(`Are you sure you want to delete user "${user.email}"? This action cannot be undone.`)) {
+  grantAdminRole(user: UserDTO): void {
+    const newRoles = user.roles.slice();
+    newRoles.push('ROLE_ADMIN');
+    this.updateUserRoles(user, newRoles);
+  }
+
+  removeAdminRole(user: UserDTO): void {
+    const newRoles = user.roles.filter(role => {
+      const roleStr = typeof role === 'string' ? role : String(role);
+      return roleStr !== 'ROLE_ADMIN';
+    });
+    this.updateUserRoles(user, newRoles);
+  }
+
+  deleteUser(user: UserDTO): void {
+    if (confirm(`Are you sure you want to delete user ${user.name}?`)) {
       this.adminService.deleteUser(user.id).subscribe({
         next: () => {
-          alert('User deleted successfully');
-          this.loadUsers();
+          this.users = this.users.filter(u => u.id !== user.id);
+          console.log('✅ User deleted successfully');
         },
-        error: (err) => {
-          alert('Failed to delete user: ' + (err.error?.error || 'Please try again'));
-          console.error('Error deleting user:', err);
+        error: (err: any) => {
+          console.error('❌ Error deleting user:', err);
         }
       });
     }
   }
 
-  hasRole(user: User, roleName: string): boolean {
-    return user.roles.some(role => role.name === roleName);
+  hasRole(user: UserDTO, roleName: string): boolean {
+    return user.roles.some(role => {
+      const roleStr = typeof role === 'string' ? role : String(role);
+      return roleStr === roleName;
+    });
   }
 
-  isCurrentUser(user: User): boolean {
-    return this.authService.currentUserValue?.email === user.email;
+  isCurrentUser(user: UserDTO): boolean {
+    const currentUser = this.authService.getCurrentUser();
+    return currentUser ? currentUser.email === user.email : false;
   }
 
-  get filteredUsers(): User[] {
-    if (!this.searchKeyword) return this.users;
-    
+  get filteredUsers(): UserDTO[] {
+    if (!this.searchKeyword) {
+      return this.users;
+    }
     return this.users.filter(user => 
-      user.email.toLowerCase().includes(this.searchKeyword.toLowerCase()) ||
-      user.username.toLowerCase().includes(this.searchKeyword.toLowerCase())
+      user.name.toLowerCase().includes(this.searchKeyword.toLowerCase()) ||
+      user.email.toLowerCase().includes(this.searchKeyword.toLowerCase())
     );
   }
 }

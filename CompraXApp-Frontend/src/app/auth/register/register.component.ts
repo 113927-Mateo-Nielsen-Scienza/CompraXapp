@@ -1,32 +1,32 @@
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
-import { AuthService } from '../auth.service';
 import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { RouterModule, Router } from '@angular/router'; // ✅ VERIFICAR que Router esté importado
+import { AuthService } from '../auth.service';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule], // ✅ VERIFICAR RouterModule
   templateUrl: './register.component.html',
   styleUrl: './register.component.css'
 })
 export class RegisterComponent {
   registerForm: FormGroup;
-  errorMessage: string = '';
-  loading: boolean = false;
+  loading = false;
+  errorMessage = '';
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router // ✅ VERIFICAR que Router esté inyectado
   ) {
     this.registerForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.minLength(2)]],
       lastName: [''],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
+      password: ['', [Validators.required, Validators.minLength(6)]]
     });
   }
 
@@ -69,6 +69,11 @@ export class RegisterComponent {
     } else {
       this.errorMessage = 'Por favor, completa todos los campos requeridos correctamente.';
     }
+  }
+
+  // ✅ AGREGAR: Método para navegar manualmente
+  goToLogin(): void {
+    this.router.navigate(['/auth/login']);
   }
 
   isFieldInvalid(fieldName: string): boolean {

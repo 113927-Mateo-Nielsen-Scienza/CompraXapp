@@ -29,47 +29,54 @@
     
     <div class="filters-controls">
       <div class="search-filter">
-        <input 
-          type="text" 
-          [(ngModel)]="searchKeyword"
-          (input)="onSearch()"
-          (keyup.enter)="onSearch()"
-          placeholder="Search products..."
-          class="form-input search-input">
-        <span class="search-icon">🔍</span>
+        <label for="search">Search Products</label>
+        <div class="search-container">
+          <input 
+            id="search"
+            type="text" 
+            [(ngModel)]="searchKeyword"
+            (input)="onSearch()"
+            (keyup.enter)="onSearch()"
+            placeholder="Search products..."
+            class="search-input">
+          <span class="search-icon">🔍</span>
+        </div>
       </div>
       
       <div class="price-filters">
-        <input 
-          type="number" 
-          [(ngModel)]="minPrice"
-          (input)="onPriceChange()"
-          (blur)="onPriceChange()"
-          placeholder="Min price"
-          class="form-input price-input"
-          min="0"
-          step="0.01">
-        <span class="price-separator">-</span>
-        <input 
-          type="number" 
-          [(ngModel)]="maxPrice"
-          (input)="onPriceChange()"
-          (blur)="onPriceChange()"
-          placeholder="Max price"
-          class="form-input price-input"
-          min="0"
-          step="0.01">
+        <label>Price Range</label>
+        <div class="price-range">
+          <input 
+            type="number" 
+            [(ngModel)]="minPrice"
+            (input)="onPriceChange()"
+            (blur)="onPriceChange()"
+            placeholder="Min"
+            class="price-input"
+            min="0"
+            step="0.01">
+          <span class="price-separator">-</span>
+          <input 
+            type="number" 
+            [(ngModel)]="maxPrice"
+            (input)="onPriceChange()"
+            (blur)="onPriceChange()"
+            placeholder="Max"
+            class="price-input"
+            min="0"
+            step="0.01">
+        </div>
       </div>
       
       <button 
         (click)="clearFilters()" 
-        class="btn btn-outline btn-sm clear-filters-btn"
+        class="clear-filters-btn"
         [disabled]="!searchKeyword && !minPrice && !maxPrice">
         🗑️ Clear Filters
       </button>
     </div>
     
-    <!-- Results Count -->
+    <!-- Results Info -->
     <div class="results-info" *ngIf="!isLoading">
       <span class="results-count">
         {{ products.length }} product{{ products.length !== 1 ? 's' : '' }} found
@@ -123,23 +130,30 @@
     </div>
   </div>
 
-  <!-- Products Grid/List -->
+  <!-- Products Container -->
   <div *ngIf="!isLoading && products.length > 0" 
        class="products-container"
        [class.grid-view]="viewMode === 'grid'"
        [class.list-view]="viewMode === 'list'">
     
-    <div *ngFor="let product of products; trackBy: trackByProductId" 
-         class="product-item fade-in">
-      
-      <!-- Grid View Card -->
-      <div *ngIf="viewMode === 'grid'" class="product-card">
+    <!-- Grid View -->
+    <div *ngIf="viewMode === 'grid'" class="products-grid">
+      <div *ngFor="let product of products; trackBy: trackByProductId" 
+           class="product-card fade-in">
         <div class="product-image-container">
           <img 
             [src]="product.imageUrl || 'assets/default-product.png'" 
             [alt]="product.name" 
             class="product-image"
             (error)="onImageError($event)">
+          
+          <span class="stock-badge" 
+                [class.in-stock]="product.stockQuantity > 20"
+                [class.low-stock]="product.stockQuantity > 0 && product.stockQuantity <= 20"
+                [class.out-of-stock]="product.stockQuantity === 0">
+            {{ product.stockQuantity > 0 ? 'In Stock' : 'Out of Stock' }}
+          </span>
+          
           <div class="product-overlay">
             <button 
               (click)="viewProduct(product)"
@@ -152,7 +166,7 @@
         <div class="product-info">
           <h3 class="product-name">{{ product.name }}</h3>
           <p class="product-description">
-            {{ product.description | slice:0:80 }}{{ product.description.length > 80 ? '...' : '' }}
+            {{ product.description || 'No description available' }}
           </p>
           
           <div class="product-footer">
@@ -169,38 +183,37 @@
                 <span *ngIf="product.stockQuantity > 0">🛒 Add to Cart</span>
                 <span *ngIf="product.stockQuantity === 0">Out of Stock</span>
               </button>
-              
-              <a *ngIf="!currentUser" 
-                 routerLink="/auth/login" 
-                 class="btn btn-outline btn-sm">
-                Login to Buy
-              </a>
             </div>
-          </div>
-          
-          <div class="product-meta">
-            <span class="stock-info" 
-                  [class.low-stock]="product.stockQuantity <= 5"
-                  [class.out-of-stock]="product.stockQuantity === 0">
-              {{ product.stockQuantity > 0 ? product.stockQuantity + ' in stock' : 'Out of stock' }}
-            </span>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- List View Card -->
-      <div *ngIf="viewMode === 'list'" class="product-list-item">
-        <div class="list-image">
-          <img 
-            [src]="product.imageUrl || 'assets/default-product.png'" 
-            [alt]="product.name"
-            (error)="onImageError($event)">
-        </div>
-        
-        <div class="list-content">
-          <div class="list-main">
+    <!-- List View -->
+    <div *ngIf="viewMode === 'list'" class="products-list">
+      <div *ngFor="let product of products; trackBy: trackByProductId" 
+           class="product-item fade-in">
+        <div class="product-list-card">
+          <div class="list-image-container">
+            <img 
+              [src]="product.imageUrl || 'assets/default-product.png'" 
+              [alt]="product.name" 
+              class="list-image"
+              (error)="onImageError($event)">
+          </div>
+          
+          <div class="list-info">
             <h3 class="product-name">{{ product.name }}</h3>
-            <p class="product-description">{{ product.description }}</p>
+            <p class="product-description">{{ product.description || 'No description available' }}</p>
+            
+            <div class="stock-info">
+              <span class="stock-badge" 
+                    [class.in-stock]="product.stockQuantity > 20"
+                    [class.low-stock]="product.stockQuantity > 0 && product.stockQuantity <= 20"
+                    [class.out-of-stock]="product.stockQuantity === 0">
+                {{ product.stockQuantity > 0 ? 'In Stock' : 'Out of Stock' }}
+              </span>
+            </div>
           </div>
           
           <div class="list-actions">

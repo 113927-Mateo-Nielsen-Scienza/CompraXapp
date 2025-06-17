@@ -1,41 +1,24 @@
 <nav class="navbar">
-  <div class="navbar-container">
-    <!-- Logo y Marca -->
+  <div class="nav-container">
+    <!-- Logo -->
     <div class="navbar-brand">
       <a routerLink="/" class="brand-link">
-        <div class="brand-logo">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="currentColor"/>
-            <path d="M8 12h16l-2 8H10l-2-8z" fill="white"/>
-            <circle cx="12" cy="26" r="2" fill="white"/>
-            <circle cx="22" cy="26" r="2" fill="white"/>
-          </svg>
-        </div>
+      
         <span class="brand-text">CompraXApp</span>
       </a>
     </div>
 
-    <!-- Navigation Links -->
+    <!-- Desktop Navigation -->
     <div class="navbar-nav">
-      <a routerLink="/products" routerLinkActive="active" class="nav-link">
-        <span class="nav-icon">🛍️</span>
-        Products
-      </a>
-      
-      <a *ngIf="currentUser" routerLink="/cart" routerLinkActive="active" class="nav-link cart-link">
-        <span class="nav-icon">🛒</span>
+      <a routerLink="/products" class="nav-link">Products</a>
+      <a *ngIf="currentUser" routerLink="/cart" class="nav-link cart-link">
         Cart
         <span *ngIf="cartItemCount > 0" class="cart-badge">{{ cartItemCount }}</span>
       </a>
-      
-      <a *ngIf="currentUser && isAdmin()" routerLink="/admin" routerLinkActive="active" class="nav-link admin-link">
-        <span class="nav-icon">⚙️</span>
-        Admin
-      </a>
     </div>
 
-    <!-- User Actions -->
-    <div class="navbar-user">
+    <!-- Right Side Controls -->
+    <div class="navbar-controls">
       <!-- Auth Links (when not logged in) -->
       <div *ngIf="!currentUser" class="auth-links">
         <a routerLink="/auth/login" class="btn btn-outline btn-sm">Login</a>
@@ -44,6 +27,11 @@
       
       <!-- User Menu (when logged in) -->
       <div *ngIf="currentUser" class="nav-user-menu">
+        <!-- ✅ NOTIFICACIONES DESKTOP -->
+        <div class="navbar-notifications">
+          <app-notification-dropdown></app-notification-dropdown>
+        </div>
+        
         <div class="dropdown">
           <button class="user-menu-btn" (click)="toggleUserMenu()">
             <span class="user-icon">👤</span>
@@ -61,6 +49,7 @@
               <span class="item-icon">📦</span>
               My Orders
             </a>
+         
             
             <div *ngIf="isAdmin()" class="dropdown-divider"></div>
             
@@ -92,6 +81,12 @@
     <a *ngIf="currentUser" routerLink="/cart" (click)="closeMobileMenu()" class="mobile-nav-link">
       Cart <span *ngIf="cartItemCount > 0" class="cart-badge">{{ cartItemCount }}</span>
     </a>
+    
+    <!-- ✅ SIMPLIFICAR NOTIFICACIONES EN MOBILE -->
+    <a *ngIf="currentUser" routerLink="/notifications" (click)="closeMobileMenu()" class="mobile-nav-link">
+      🔔 Notifications
+    </a>
+    
     <a *ngIf="currentUser && isAdmin()" routerLink="/admin" (click)="closeMobileMenu()" class="mobile-nav-link">Admin</a>
     
     <div class="mobile-auth" *ngIf="!currentUser">
@@ -105,6 +100,7 @@
         <span>{{ currentUser.email }}</span>
       </div>
       <a routerLink="/user/profile" (click)="closeMobileMenu()" class="mobile-nav-link">My Profile</a>
+      <a routerLink="/user/orders" (click)="closeMobileMenu()" class="mobile-nav-link">My Orders</a>
       <button (click)="logout()" class="btn btn-danger">Logout</button>
     </div>
   </div>

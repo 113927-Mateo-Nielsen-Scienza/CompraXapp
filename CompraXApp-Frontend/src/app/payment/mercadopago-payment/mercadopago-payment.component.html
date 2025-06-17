@@ -1,0 +1,55 @@
+<div class="mercadopago-container">
+  <div class="mercadopago-header">
+    <h1>💳 Pay with MercadoPago</h1>
+    <p>Process your payment securely</p>
+    <div class="mercadopago-logo">
+      <i class="fab fa-cc-mastercard"></i>
+      <i class="fab fa-cc-visa"></i>
+      MercadoPago
+    </div>
+  </div>
+
+  <div class="payment-summary">
+    <h3>Payment Summary</h3>
+    <div class="summary-details">
+      <div class="summary-row">
+        <span>Products:</span>
+        <span>{{ orderData.items?.length || 0 }} items</span>
+      </div>
+      <div class="summary-row total">
+        <span><strong>Total to pay:</strong></span>
+        <span><strong>${{ orderData.total | number:'1.2-2' }}</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="payment-form" *ngIf="!loading">
+    <div class="security-badges">
+      <div class="security-badge">🔒 Secure Payment</div>
+      <div class="security-badge">🛡️ Protected</div>
+      <div class="security-badge">✅ Trusted</div>
+    </div>
+    
+    <button class="pay-button" (click)="processMercadoPagoPayment()">
+      <i class="fab fa-cc-mastercard"></i>
+      <i class="fab fa-cc-visa"></i>
+      Pay ${{ orderData.total | number:'1.2-2' }} with MercadoPago
+    </button>
+  </div>
+
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Processing your payment...</p>
+  </div>
+
+  <div class="error-message" *ngIf="error">
+    <i class="fas fa-exclamation-triangle"></i>
+    <p>{{ error }}</p>
+  </div>
+
+  <div class="payment-actions">
+    <button class="btn-secondary" (click)="goBack()" [disabled]="loading">
+      <i class="fas fa-arrow-left"></i> Back
+    </button>
+  </div>
+</div>

@@ -1,40 +1,61 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Product } from '../models/Product';
+import { environment } from '../../environments/environment';
+
+// ✅ INTERFACES EXACTAS según backend
+export interface ProductResponse {
+  id: number;
+  name: string;
+  description?: string;
+  price: number;
+  stockQuantity: number;
+  imageUrl?: string;
+  active: boolean;
+}
+
+export interface ProductCreateRequest {
+  name: string;
+  description?: string;
+  price: number;
+  stockQuantity: number;
+  imageUrl?: string;
+  active?: boolean;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProductService {
-  private apiUrl = 'http://localhost:8080/api/products';
+  private apiUrl = `${environment.apiUrl}/products`;
 
   constructor(private http: HttpClient) { }
 
-  getProducts(keyword?: string, minPrice?: number, maxPrice?: number, categoryId?: number): Observable<Product[]> {
+  // ✅ ENDPOINT EXACTO: GET /api/products (PÚBLICO)
+  getProducts(keyword?: string, minPrice?: number, maxPrice?: number): Observable<ProductResponse[]> {
     let params = new HttpParams();
     if (keyword) params = params.set('keyword', keyword);
     if (minPrice !== undefined) params = params.set('minPrice', minPrice.toString());
     if (maxPrice !== undefined) params = params.set('maxPrice', maxPrice.toString());
-    if (categoryId !== undefined) params = params.set('categoryId', categoryId.toString());
     
-    return this.http.get<Product[]>(this.apiUrl, { params });
+    return this.http.get<ProductResponse[]>(this.apiUrl, { params });
   }
 
-  getProductById(id: number): Observable<Product> {
-    return this.http.get<Product>(`${this.apiUrl}/${id}`);
+  // ✅ ENDPOINT EXACTO: GET /api/products/{id} (PÚBLICO)
+  getProductById(id: number): Observable<ProductResponse> {
+    return this.http.get<ProductResponse>(`${this.apiUrl}/${id}`);
   }
 
-  // Métodos para Admin (requieren autenticación y rol)
-  createProduct(productData: FormData): Observable<Product> {
-    return this.http.post<Product>(this.apiUrl, productData, { withCredentials: true });
+  // ✅ MÉTODOS ADMIN - endpoints exactos
+  createProduct(productData: ProductCreateRequest): Observable<ProductResponse> {
+    return this.http.post<ProductResponse>(this.apiUrl, productData);
   }
 
-  updateProduct(id: number, productData: FormData): Observable<Product> {
-    return this.http.put<Product>(`${this.apiUrl}/${id}`, productData, { withCredentials: true });
+  updateProduct(id: number, productData: ProductCreateRequest): Observable<ProductResponse> {
+    return this.http.put<ProductResponse>(`${this.apiUrl}/${id}`, productData);
   }
 
   deleteProduct(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`, { withCredentials: true });
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

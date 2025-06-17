@@ -1,7 +1,7 @@
 <div class="admin-users">
   <!-- Header -->
   <div class="header">
-    <h1>👥 User Management</h1>
+    <h1> User Management</h1>
   </div>
 
   <!-- Search Section -->
@@ -30,8 +30,8 @@
       <table>
         <thead>
           <tr>
-            <th>Email</th>
-            <th>Username</th>
+            <th>ID</th>
+            <th>User Info</th>
             <th>Roles</th>
             <th>Status</th>
             <th>Joined</th>
@@ -41,76 +41,67 @@
         <tbody>
           <tr *ngFor="let user of filteredUsers" 
               [class.current-user]="isCurrentUser(user)">
+            <td>{{ user.id }}</td>
             
-            <!-- Email Cell -->
-            <td class="email-cell">
-              {{ user.email }}
-              <span *ngIf="isCurrentUser(user)" class="current-user-badge">
-                You
-              </span>
+            <!-- User Info Cell -->
+            <td>
+              <div class="user-info">
+                <strong>{{ user.name }}</strong>
+                <div class="user-email">{{ user.email }}</div>
+              </div>
             </td>
             
-            <!-- Username Cell -->
-            <td class="username-cell">
-              {{ user.username || 'N/A' }}
-            </td>
-            
-            <!-- Roles Cell -->
-            <td class="roles-cell">
-              <div class="roles-container">
+            <!-- ✅ FIX: Roles Cell con manejo seguro -->
+            <td>
+              <div class="user-roles">
                 <span *ngFor="let role of user.roles" 
-                      class="role-badge"
-                      [class]="'role-' + role.name.toLowerCase()">
-                  {{ role.name.replace('ROLE_', '') }}
+                      class="role-badge" 
+                      [class]="getRoleClass(role)">
+                  {{ formatRole(role) }}
                 </span>
               </div>
             </td>
             
             <!-- Status Cell -->
-            <td class="status-cell">
-              <span [class.status-active]="user.enabled"
-                    [class.status-inactive]="!user.enabled">
-                {{ user.enabled ? 'Active' : 'Inactive' }}
+            <td>
+              <span [class.status-active]="user.active"
+                    [class.status-inactive]="!user.active">
+                {{ user.active ? 'Active' : 'Inactive' }}
               </span>
             </td>
             
             <!-- Date Cell -->
-            <td class="date-cell">
-              {{ user.createdAt | date:'shortDate' }}
+            <td>
+              <span class="text-muted">N/A</span>
             </td>
             
             <!-- Actions Cell -->
             <td class="actions-cell">
-              <div class="action-buttons">
-                <!-- Make Admin Button -->
-                <button 
-                  *ngIf="!hasRole(user, 'ROLE_ADMIN')" 
-                  (click)="toggleUserRole(user, 'ROLE_ADMIN')"
-                  class="make-admin-btn"
-                  [disabled]="isCurrentUser(user)"
-                  title="Make Admin">
-                  👑
+              <div class="admin-toggle" *ngIf="!isCurrentUser(user)">
+                <!-- Grant Admin Button -->
+                <button *ngIf="!hasRole(user, 'ROLE_ADMIN')" 
+                        class="btn btn-sm btn-success"
+                        (click)="grantAdminRole(user)"
+                        title="Grant Admin Access">
+                  Grant Admin
                 </button>
                 
                 <!-- Remove Admin Button -->
-                <button 
-                  *ngIf="hasRole(user, 'ROLE_ADMIN')" 
-                  (click)="toggleUserRole(user, 'ROLE_ADMIN')"
-                  class="remove-admin-btn"
-                  [disabled]="isCurrentUser(user)"
-                  title="Remove Admin">
-                  👤
-                </button>
-                
-                <!-- Delete User Button -->
-                <button 
-                  (click)="deleteUser(user)"
-                  class="delete-btn"
-                  [disabled]="isCurrentUser(user)"
-                  title="Delete User">
-                  🗑️
+                <button *ngIf="hasRole(user, 'ROLE_ADMIN')" 
+                        class="btn btn-sm btn-warning"
+                        (click)="removeAdminRole(user)"
+                        title="Remove Admin Access">
+                  Remove Admin
                 </button>
               </div>
+              
+              <!-- Delete User Button -->
+              <button class="btn btn-sm btn-danger" 
+                      (click)="deleteUser(user)"
+                      [disabled]="isCurrentUser(user)"
+                      title="Delete User">
+                🗑️ Delete
+              </button>
             </td>
           </tr>
         </tbody>

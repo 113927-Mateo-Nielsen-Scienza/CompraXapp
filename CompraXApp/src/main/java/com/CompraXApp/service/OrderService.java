@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
-
+    
     @Autowired
     private OrderRepository orderRepository;
 
@@ -30,6 +30,9 @@ public class OrderService {
 
     @Autowired
     private ProductRepository productRepository; 
+
+    @Autowired
+    private NotificationService notificationService; // ✅ AGREGAR ESTA LÍNEA
 
   
     @Transactional(readOnly = true)
@@ -76,7 +79,10 @@ public class OrderService {
         }
         
         Order savedOrder = orderRepository.save(order);
-      
+        
+        // ✅ AGREGAR: Crear notificación de pedido creado
+        notificationService.createOrderNotification(savedOrder);
+        
         cart.clear();
         cartRepository.save(cart);
         
@@ -121,6 +127,87 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
         return convertToOrderDTO(order);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderDTO getOrderByIdForUser(Long orderId, Long userId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+    
+        // Verificar que la orden pertenece al usuario
+        if (!order.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Access denied: Order does not belong to user");
+        }
+    
+        return convertToOrderDTO(order);
+    }
+
+    /**
+     * NUEVO: Actualizar estado de orden (solo para admin)
+     */
+    @Transactional
+    public OrderDTO updateOrderStatus(Long orderId, Order.OrderStatus newStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+        
+        // Validaciones de negocio
+        if (order.getStatus() == Order.OrderStatus.CANCELLED) {
+            throw new RuntimeException("Cannot update status of a cancelled order");
+        }
+        
+        if (order.getStatus() == Order.OrderStatus.COMPLETED && newStatus != Order.OrderStatus.COMPLETED) {
+            throw new RuntimeException("Cannot change status of a completed order");
+        }
+        
+        // Actualizar estado
+        order.setStatus(newStatus);
+        Order savedOrder = orderRepository.save(order);
+        
+        return convertToOrderDTO(savedOrder);
+    }
+
+    /**
+     * NUEVO: Actualizar estado de envío (solo para admin)
+     */
+    @Transactional
+    public OrderDTO updateShippingStatus(Long orderId, Order.ShippingStatus newShippingStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+        
+        order.setShippingStatus(newShippingStatus);
+        
+        // Si se marca como enviado, generar número de tracking
+        if (newShippingStatus == Order.ShippingStatus.SHIPPED && order.getTrackingNumber() == null) {
+            order.setTrackingNumber("CX" + System.currentTimeMillis());
+            order.setShippingDate(java.time.LocalDateTime.now());
+        }
+        
+        Order savedOrder = orderRepository.save(order);
+        
+        // ✅ CORREGIR: Agregar todos los casos del enum
+        switch (newShippingStatus) {
+            case PENDING:
+                // No se requiere notificación para pendiente
+                break;
+            case PREPARING:
+                // Opcional: crear notificación de preparación
+                break;
+            case IN_TRANSIT:
+            case SHIPPED:
+                notificationService.createShippingNotification(savedOrder);
+                break;
+            case DELIVERED:
+                notificationService.createDeliveryNotification(savedOrder);
+                break;
+            case CANCELLED:
+                // Opcional: crear notificación de cancelación de envío
+                break;
+            default:
+                // Caso por defecto para cualquier nuevo estado
+                break;
+        }
+        
+        return convertToOrderDTO(savedOrder);
     }
 
     private OrderDTO convertToOrderDTO(Order order) {

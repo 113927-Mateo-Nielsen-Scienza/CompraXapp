@@ -59,26 +59,22 @@ export class ProductDetailComponent implements OnInit {
 
   addToCart(): void {
     if (!this.product) return;
-    if (!this.isLoggedIn) {
-      alert('Please log in to add products to your cart.');
-      this.router.navigate(['/auth/login'], { queryParams: { returnUrl: this.router.url } });
+    
+    if (!this.authService.isLoggedIn()) {
+      this.router.navigate(['/auth/login']);
       return;
     }
 
-    const item = {
-      productId: this.product.id,
-      quantity: this.quantity,
-      productName: this.product.name,
-      productPrice: this.product.price,
-      imageUrl: this.product.imageUrl
-    };
-    this.cartService.addItemToCart(item).subscribe({
-      next: () => {
-        alert(`${this.product?.name} (x${this.quantity}) added to cart!`);
+    this.cartService.addItemToCart(this.product.id, this.quantity).subscribe({
+      next: (cart) => {
+        console.log('Product added to cart successfully');
+        // ✅ TRANSLATE: Show success notification in English
+        alert('Product added to cart successfully!');
       },
       error: (err) => {
-        alert(`Failed to add ${this.product?.name} to cart. ` + (err.error?.message || 'Please try again.'));
-        console.error(err);
+        console.error('Error adding product to cart:', err);
+        // ✅ TRANSLATE: Show error notification in English
+        alert('Error adding product to cart. Please try again.');
       }
     });
   }

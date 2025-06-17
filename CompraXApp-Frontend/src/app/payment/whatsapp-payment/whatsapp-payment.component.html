@@ -1,0 +1,79 @@
+<div class="whatsapp-container">
+  <div class="whatsapp-header">
+    <h1>📱 Coordinar pago por WhatsApp</h1>
+    <p>Contacta directamente con el vendedor</p>
+  </div>
+
+  <div class="payment-summary">
+    <h3>Resumen del pedido</h3>
+    <div class="order-items">
+      <div class="item" *ngFor="let item of orderData.items">
+        <span>{{ item.productName }} x{{ item.quantity }}</span>
+        <span>${{ (item.pricePerUnit * item.quantity) | number:'1.2-2' }}</span>
+      </div>
+    </div>
+    <div class="total">
+      <strong>Total: ${{ orderData.total | number:'1.2-2' }}</strong>
+    </div>
+  </div>
+
+  <div class="whatsapp-info">
+    <div class="payment-steps">
+      <h2>¿Cómo funciona?</h2>
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <h3>Confirma tu pedido</h3>
+          <p>Haz clic en "Continuar por WhatsApp" para procesar tu orden</p>
+        </div>
+      </div>
+      
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <h3>Contacta al vendedor</h3>
+          <p>Te redirigiremos a WhatsApp con todos los detalles de tu pedido</p>
+        </div>
+      </div>
+      
+      <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <h3>Coordina el pago</h3>
+          <p>Acuerda con el vendedor la forma de pago y entrega</p>
+        </div>
+      </div>
+      
+      <div class="step">
+        <div class="step-number">4</div>
+        <div class="step-content">
+          <h3>Recibe tu pedido</h3>
+          <p>Una vez coordinado, recibirás tu pedido según lo acordado</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="payment-form" *ngIf="!loading">
+    <button class="btn-whatsapp" (click)="processWhatsAppPayment()">
+      <i class="fab fa-whatsapp"></i>
+      Continuar por WhatsApp - ${{ orderData.total | number:'1.2-2' }}
+    </button>
+  </div>
+
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Creando tu pedido...</p>
+  </div>
+
+  <div class="error-message" *ngIf="error">
+    <i class="fas fa-exclamation-triangle"></i>
+    <p>{{ error }}</p>
+  </div>
+
+  <div class="payment-actions">
+    <button class="btn-secondary" (click)="goBack()" [disabled]="loading">
+      <i class="fas fa-arrow-left"></i> Volver
+    </button>
+  </div>
+</div>

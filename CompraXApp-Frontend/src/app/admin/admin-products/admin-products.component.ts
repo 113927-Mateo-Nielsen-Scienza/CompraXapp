@@ -20,6 +20,7 @@ export class AdminProductsComponent implements OnInit {
   searchKeyword: string = '';
   minPrice: number | undefined;
   maxPrice: number | undefined;
+  selectedProduct: Product | null = null; // ✅ AGREGAR propiedad
 
   constructor(
     private adminService: AdminService,
@@ -85,6 +86,16 @@ export class AdminProductsComponent implements OnInit {
     // Aquí podrías implementar la funcionalidad para activar/desactivar productos
     // Por ahora solo mostramos el estado
     console.log('Toggle product status:', product);
+  }
+
+  // AGREGAR método selectProduct
+  selectProduct(product: Product): void {
+    this.selectedProduct = product;
+  }
+
+  // AGREGAR método closeDetails
+  closeDetails(): void {
+    this.selectedProduct = null;
   }
 
   // Agregar método para manejar errores de imagen

@@ -18,7 +18,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.Arrays;
-import java.util.List;
+
 
 @Configuration
 @EnableWebSecurity
@@ -54,6 +54,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/products").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
+                
+                // Notificaciones - Solo usuarios autenticados
+                .requestMatchers("/api/notifications/**").hasRole("USER")
                 
                 // Swagger UI - Público
                 .requestMatchers("/swagger-ui/**").permitAll()

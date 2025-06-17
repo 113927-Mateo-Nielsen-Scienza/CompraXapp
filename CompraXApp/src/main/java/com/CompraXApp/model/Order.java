@@ -38,6 +38,17 @@ public class Order {
         PENDING, PROCESSING, COMPLETED, CANCELLED
     }
 
+    public enum ShippingStatus {
+        PENDING, PREPARING, SHIPPED, IN_TRANSIT, DELIVERED, CANCELLED
+    }
+
+    @Enumerated(EnumType.STRING)
+    private ShippingStatus shippingStatus = ShippingStatus.PENDING;
+
+    private String trackingNumber;
+    private LocalDateTime shippingDate;
+    private LocalDateTime deliveryDate;
+
 
     public void addItem(OrderItem item) {
         items.add(item);

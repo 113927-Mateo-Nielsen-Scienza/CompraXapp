@@ -1,23 +1,23 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
-import { AuthService } from '../../auth/auth.service'; 
-import { CartService } from '../../cart/cart.service'; 
-import { Subscription } from 'rxjs';
-import { AuthResponse } from '../../models/User';
-import { Cart } from '../../models/Cart';
 import { CommonModule } from '@angular/common';
+import { RouterModule, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { AuthService, LoginResponse } from '../../auth/auth.service';
+import { CartService, CartDTO } from '../../cart/cart.service';
+import { NotificationDropdownComponent } from '../../notifications/notification-dropdown/notification-dropdown.component';
 
 @Component({
   selector: 'app-navbar',
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, NotificationDropdownComponent],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.css'
 })
 export class NavbarComponent implements OnInit, OnDestroy {
-  currentUser: AuthResponse | null = null;
+  currentUser: LoginResponse | null = null;
   cartItemCount: number = 0;
   mobileMenuOpen = false;
   isUserMenuOpen = false;
+  // ✅ REMOVER mobileNotificationCount hasta que funcione correctamente
   private authSubscription: Subscription | undefined;
   private cartSubscription: Subscription | undefined;
 
@@ -28,20 +28,41 @@ export class NavbarComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.authSubscription = this.authService.currentUser.subscribe(user => {
+    this.authSubscription = this.authService.currentUser.subscribe((user: LoginResponse | null) => {
       this.currentUser = user;
       if (user) {
-        this.cartService.getCart().subscribe({
-          error: (err) => console.error('Error loading cart in navbar:', err)
-        });
+        this.loadCartInfo();
+        this.loadUser();
+        // ✅ REMOVER loadNotificationCount() temporalmente
       } else {
         this.cartItemCount = 0;
       }
     });
 
-    this.cartSubscription = this.cartService.cart$.subscribe((cart: Cart | null) => {
-      this.cartItemCount = cart ? cart.items.reduce((sum, item) => sum + item.quantity, 0) : 0;
+    this.cartSubscription = this.cartService.cart$.subscribe((cart: CartDTO | null) => {
+      this.cartItemCount = cart ? cart.items.reduce((sum: number, item: any) => sum + item.quantity, 0) : 0;
     });
+  }
+
+  private loadCartInfo(): void {
+    this.cartService.getCart().subscribe({
+      next: (cart: CartDTO | null) => {
+        this.cartItemCount = cart?.items?.length || 0;
+      },
+      error: (error: any) => {
+        if (error.status !== 401) {
+          console.error('Error loading cart in navbar:', error);
+        }
+        this.cartItemCount = 0;
+      }
+    });
+  }
+
+  loadUser(): void {
+    const user = this.authService.getCurrentUser();
+    if (user) {
+      this.currentUser = user;
+    }
   }
 
   logout(): void {
@@ -50,7 +71,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.closeUserMenu(); 
   }
 
- 
   get isLoggedIn(): boolean {
     return !!this.currentUser;
   }
@@ -60,8 +80,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   getUserName(): string {
-    if (!this.currentUser) return '';
-    return this.currentUser.username || this.currentUser.email?.split('@')[0] || '';
+    return this.currentUser?.name || this.currentUser?.email?.split('@')[0] || 'Usuario';
   }
 
   getUserInitials(): string {
