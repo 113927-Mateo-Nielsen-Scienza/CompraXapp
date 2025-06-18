@@ -6,6 +6,7 @@ import { ProductFormComponent } from './product-form/product-form.component';
 import { AdminUsersComponent } from './admin-users/admin-users.component';
 import { AdminOrdersComponent } from './admin-orders/admin-orders.component';
 import { AdminSettingsComponent } from './admin-settings/admin-settings.component';
+import { AdminPromotionsComponent } from './admin-promotions/admin-promotions.component';
 
 const routes: Routes = [
   { path: '', component: AdminDashboardComponent },
@@ -22,6 +23,10 @@ const routes: Routes = [
         (m) => m.AdminReportsComponent
       ),
     data: { title: 'Product Statistics' },
+  },
+  {
+    path: 'promotions',
+    component: AdminPromotionsComponent,
   },
 ];
 

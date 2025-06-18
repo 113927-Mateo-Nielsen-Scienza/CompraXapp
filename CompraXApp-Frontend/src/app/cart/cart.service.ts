@@ -1,24 +1,33 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
+import { map, tap, catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { AuthService } from '../auth/auth.service';
 import { Router } from '@angular/router';
+import { PromotionService, ProductWithPromotion } from '../services/promotion.service';
 
 // ✅ INTERFACES EXACTAS según backend
 export interface CartDTO {
   id: number;
   items: CartItemDTO[];
   totalAmount: number;
+  originalTotalAmount?: number; // ✅ AGREGAR: Total original sin descuentos
+  totalDiscount?: number; // ✅ AGREGAR: Total de descuentos aplicados
 }
 
 export interface CartItemDTO {
   id: number;
   productId: number;
   productName: string;
-  quantity: number;
   pricePerUnit: number;
+  originalPrice?: number; // ✅ AGREGAR: Precio original
+  quantity: number;
+  imageUrl?: string;
+  // ✅ AGREGAR: Campos de promoción
+  discountPercentage?: number;
+  hasPromotion?: boolean;
+  promotionTitle?: string;
 }
 
 @Injectable({
@@ -32,8 +41,11 @@ export class CartService {
   constructor(
     private http: HttpClient, 
     private authService: AuthService,
-    private router: Router
-  ) { }
+    private router: Router,
+    private promotionService: PromotionService // ✅ AGREGAR: Inyectar PromotionService
+  ) { 
+    this.loadCart();
+  }
 
   // ✅ ENDPOINT EXACTO: GET /api/cart
   getCart(): Observable<CartDTO> {
@@ -41,12 +53,54 @@ export class CartService {
       return throwError(() => new Error('User not logged in.'));
     }
     return this.http.get<CartDTO>(this.apiUrl).pipe(
+      map(cart => this.applyPromotionsToCart(cart)), // ✅ Aplicar promociones
       tap(cart => {
         console.log('Cart loaded:', cart);
         this.cartSubject.next(cart);
       }),
       catchError(this.handleError.bind(this))
     );
+  }
+
+  // ✅ NUEVO: Aplicar promociones al carrito completo
+  private applyPromotionsToCart(cart: CartDTO): CartDTO {
+    if (!cart || !cart.items) return cart;
+
+    // Aplicar promociones a cada item del carrito
+    const updatedItems = cart.items.map(item => {
+      // Crear un objeto "producto" temporal para aplicar promociones
+      const tempProduct = {
+        id: item.productId,
+        name: item.productName,
+        price: item.originalPrice || item.pricePerUnit, // Usar precio original
+        stockQuantity: 999, // Temporal
+        active: true
+      };
+
+      // Aplicar promoción
+      const productWithPromotion = this.promotionService.applyPromotionToProduct(tempProduct);
+
+      // Actualizar el item del carrito con el precio promocional
+      return {
+        ...item,
+        pricePerUnit: productWithPromotion.price, // ✅ Precio con descuento
+        originalPrice: productWithPromotion.originalPrice,
+        discountPercentage: productWithPromotion.discountPercentage,
+        hasPromotion: productWithPromotion.hasPromotion,
+        promotionTitle: productWithPromotion.promotionTitle
+      };
+    });
+
+    // Recalcular total del carrito
+    const newTotalAmount = updatedItems.reduce((total, item) => {
+      return total + (item.pricePerUnit * item.quantity);
+    }, 0);
+
+    return {
+      ...cart,
+      items: updatedItems,
+      totalAmount: newTotalAmount
+    };
   }
 
   // ✅ ENDPOINT EXACTO: POST /api/cart/items?productId={}&quantity={}
@@ -144,5 +198,35 @@ export class CartService {
     }
     
     return throwError(() => new Error(errorMessage));
+  }
+
+  // ✅ ACTUALIZAR: Agregar producto con promociones
+  addToCart(productId: number, quantity: number = 1): Observable<CartDTO> {
+    const request = { productId, quantity };
+    return this.http.post<CartDTO>(this.apiUrl, request).pipe(
+      map(cart => this.applyPromotionsToCart(cart)), // ✅ Aplicar promociones
+      tap(cart => this.cartSubject.next(cart))
+    );
+  }
+
+  // ✅ ACTUALIZAR: Actualizar cantidad con promociones
+  updateQuantity(cartItemId: number, quantity: number): Observable<CartDTO> {
+    return this.http.put<CartDTO>(`${this.apiUrl}/update`, { cartItemId, quantity }).pipe(
+      map(cart => this.applyPromotionsToCart(cart)), // ✅ Aplicar promociones
+      tap(cart => this.cartSubject.next(cart))
+    );
+  }
+
+  // ✅ ACTUALIZAR: Cargar carrito inicial con promociones
+  private loadCart(): void {
+    this.getCart().subscribe({
+      next: (cart) => {
+        console.log('✅ Cart loaded with promotions:', cart);
+      },
+      error: (error) => {
+        console.log('ℹ️ No active cart found or user not logged in');
+        this.cartSubject.next(null);
+      }
+    });
   }
 }

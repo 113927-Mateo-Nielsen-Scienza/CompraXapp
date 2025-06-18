@@ -6,6 +6,8 @@ import { CartService } from '../../cart/cart.service'; // Ajusta la ruta
 import { AuthService } from '../../auth/auth.service'; // Ajusta la ruta
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { PromotionService, ProductWithPromotion } from '../../services/promotion.service';
+
 @Component({
   selector: 'app-product-detail',
   imports: [CommonModule, FormsModule],
@@ -13,9 +15,9 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './product-detail.component.css'
 })
 export class ProductDetailComponent implements OnInit {
-  product: Product | undefined;
-  isLoading = true;
+  product: ProductWithPromotion | null = null; // ✅ Cambiar tipo
   quantity: number = 1;
+  isLoading = true;
   isLoggedIn = false;
   public readonly Infinity = Infinity; 
 
@@ -24,7 +26,8 @@ export class ProductDetailComponent implements OnInit {
     private router: Router,
     private productService: ProductService,
     private cartService: CartService,
-    private authService: AuthService
+    private authService: AuthService,
+    private promotionService: PromotionService // ✅ Inyectar
   ) {}
 
   ngOnInit(): void {
@@ -39,17 +42,32 @@ export class ProductDetailComponent implements OnInit {
     this.authService.currentUser.subscribe(user => {
       this.isLoggedIn = !!user;
     });
+
+    // ✅ Escuchar cambios en promociones
+    this.promotionService.activePromotions$.subscribe(promotions => {
+      if (promotions.length > 0 && this.product) {
+        this.refreshProductWithPromotions();
+      }
+    });
+  }
+
+  // ✅ NUEVO: Refrescar producto con promociones
+  refreshProductWithPromotions(): void {
+    if (this.product) {
+      this.product = this.promotionService.applyPromotionToProduct(this.product);
+    }
   }
 
   loadProduct(id: number): void {
     this.isLoading = true;
     this.productService.getProductById(id).subscribe({
-      next: (data) => {
-        this.product = data;
+      next: (product) => {
+        this.product = product;
         this.isLoading = false;
+        console.log('✅ Product loaded with promotions:', product);
       },
-      error: (err) => {
-        console.error('Error fetching product', err);
+      error: (error) => {
+        console.error('❌ Error loading product:', error);
         this.isLoading = false;
         // Manejar error, quizás redirigir
         this.router.navigate(['/products']);
@@ -57,22 +75,23 @@ export class ProductDetailComponent implements OnInit {
     });
   }
 
+  // ✅ ACTUALIZAR: Agregar al carrito con precio promocional
   addToCart(): void {
     if (!this.product) return;
     
-    if (!this.authService.isLoggedIn()) {
+    if (!this.isLoggedIn) {
       this.router.navigate(['/auth/login']);
       return;
     }
 
     this.cartService.addItemToCart(this.product.id, this.quantity).subscribe({
       next: (cart) => {
-        console.log('Product added to cart successfully');
-        // ✅ TRANSLATE: Show success notification in English
+        console.log('✅ Product added to cart with promotional price');
+        // Mostrar mensaje de éxito
         alert('Product added to cart successfully!');
       },
-      error: (err) => {
-        console.error('Error adding product to cart:', err);
+      error: (error) => {
+        console.error('❌ Error adding to cart:', error);
         // ✅ TRANSLATE: Show error notification in English
         alert('Error adding product to cart. Please try again.');
       }

@@ -88,6 +88,32 @@ export interface ReportsSummary {
   salesReport: SalesReportDTO;
 }
 
+
+export interface PromotionDTO {
+  id: number;
+  title: string;
+  description: string;
+  discountPercentage: number;
+  startDate: string; // ISO string from backend
+  endDate: string;
+  active: boolean;
+  createdAt?: string;
+}
+
+export interface PromotionCreateRequest {
+  title: string;
+  description: string;
+  discountPercentage: number;
+  startDate: string; // ISO string
+  endDate: string;
+  active?: boolean;
+}
+
+export interface PromotionResponse {
+  message: string;
+  promotionId?: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -260,6 +286,64 @@ export class AdminService {
   updateOrderStatus(orderId: number, status: string): Observable<any> {
     return this.http.put<any>(`${this.apiUrl}/orders/${orderId}/status`, { status })
       .pipe(catchError(this.handleError.bind(this)));
+  }
+
+  // ✅ AGREGAR: Métodos para gestión de promociones
+  
+  // Obtener todas las promociones
+  getAllPromotions(): Observable<PromotionDTO[]> {
+    return this.http.get<PromotionDTO[]>(`${this.apiUrl}/admin/promotions`, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError.bind(this)));
+  }
+
+  // Obtener promociones activas
+  getActivePromotions(): Observable<PromotionDTO[]> {
+    return this.http.get<PromotionDTO[]>(`${this.apiUrl}/admin/promotions/active`, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError.bind(this)));
+  }
+
+  // Obtener promoción por ID
+  getPromotionById(id: number): Observable<PromotionDTO> {
+    return this.http.get<PromotionDTO>(`${this.apiUrl}/admin/promotions/${id}`, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError.bind(this)));
+  }
+
+  // Crear nueva promoción
+  createPromotion(promotion: PromotionCreateRequest): Observable<PromotionDTO> {
+    return this.http.post<PromotionDTO>(`${this.apiUrl}/admin/promotions`, promotion, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError.bind(this)));
+  }
+
+  // Actualizar promoción
+  updatePromotion(id: number, promotion: PromotionCreateRequest): Observable<PromotionDTO> {
+    return this.http.put<PromotionDTO>(`${this.apiUrl}/admin/promotions/${id}`, promotion, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError.bind(this)));
+  }
+
+  // Eliminar promoción
+  deletePromotion(id: number): Observable<{message: string}> {
+    return this.http.delete<{message: string}>(`${this.apiUrl}/admin/promotions/${id}`, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError.bind(this)));
+  }
+
+  // Activar/Desactivar promoción
+  togglePromotionStatus(id: number): Observable<PromotionDTO> {
+    return this.http.patch<PromotionDTO>(`${this.apiUrl}/admin/promotions/${id}/toggle`, {}, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError.bind(this)));
+  }
+
+  // Enviar promoción a todos los usuarios
+  sendPromotionToAllUsers(id: number): Observable<{message: string}> {
+    return this.http.post<{message: string}>(`${this.apiUrl}/admin/promotions/${id}/send`, {}, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError.bind(this)));
   }
 
   private handleError(error: HttpErrorResponse) {

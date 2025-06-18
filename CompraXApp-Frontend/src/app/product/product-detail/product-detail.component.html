@@ -18,78 +18,86 @@
     <a routerLink="/products" class="btn btn-primary">← Back to Products</a>
   </div>
 
-  <div *ngIf="!isLoading && product" class="product-content">
-    <div class="product-image-section">
-      <img 
-        [src]="product.imageUrl || 'assets/default-product.png'" 
-        [alt]="product.name" 
-        class="main-product-image">
+  <div class="product-detail" *ngIf="!isLoading && product">
+    <!-- ✅ AGREGAR: Badge de promoción -->
+    <div *ngIf="product.hasPromotion" class="promotion-banner">
+      <i class="fas fa-fire"></i>
+      <span>{{ product.promotionTitle }} - {{ product.discountPercentage }}% OFF!</span>
     </div>
-    
-    <div class="product-info-section">
-      <h1>{{ product.name }}</h1>
-      <p class="product-price-detail">{{ product.price | currency:'USD':'symbol' }}</p>
-      <p class="product-description-detail">{{ product.description }}</p>
 
-      <!-- Stock Information -->
-      <div *ngIf="product.stockQuantity && product.stockQuantity > 0" class="stock-info">
-        <p>✅ <strong>In Stock:</strong> {{ product.stockQuantity }} available</p>
-      </div>
-      
-      <div *ngIf="product.stockQuantity === 0" class="out-of-stock">
-        <p>❌ Out of Stock</p>
+    <div class="product-content">
+      <div class="product-image-section">
+        <img 
+          [src]="product.imageUrl || 'assets/default-product.png'" 
+          [alt]="product.name" 
+          class="product-image">
       </div>
 
-      <!-- Quantity Selector -->
-      <div class="quantity-selector" *ngIf="product.stockQuantity && product.stockQuantity > 0">
-        <label for="quantity">Quantity:</label>
-        <button 
-          type="button"
-          (click)="decrementQuantity()" 
-          [disabled]="quantity <= 1"
-          aria-label="Decrease quantity">
-          −
-        </button>
-        <input 
-          type="number" 
-          id="quantity" 
-          [(ngModel)]="quantity" 
-          min="1" 
-          [max]="product.stockQuantity"
-          readonly>
-        <button 
-          type="button"
-          (click)="incrementQuantity()" 
-          [disabled]="quantity >= (product.stockQuantity || Infinity)"
-          aria-label="Increase quantity">
-          +
-        </button>
-      </div>
+      <div class="product-info-section">
+        <h1 class="product-title">{{ product.name }}</h1>
+        <p class="product-description">{{ product.description }}</p>
 
-      <!-- Add to Cart Button -->
-      <button 
-        type="button"
-        (click)="addToCart()" 
-        class="add-to-cart-btn-detail" 
-        [disabled]="!product.stockQuantity || product.stockQuantity === 0 || !isLoggedIn">
-        <span *ngIf="!isLoggedIn">🔐 Login to Purchase</span>
-        <span *ngIf="isLoggedIn && product.stockQuantity > 0">🛒 Add to Cart</span>
-        <span *ngIf="isLoggedIn && product.stockQuantity === 0">❌ Out of Stock</span>
-      </button>
-
-      <!-- Product Meta Information -->
-      <div class="product-meta">
-        <div class="meta-item">
-          <h4>Availability</h4>
-          <p>{{ product.stockQuantity > 0 ? 'In Stock' : 'Out of Stock' }}</p>
+        <!-- ✅ ACTUALIZAR: Precios con promoción -->
+        <div class="pricing-section">
+          <div *ngIf="product.hasPromotion" class="promotional-pricing">
+            <div class="price-row">
+              <span class="current-price">${{ product.price | number:'1.2-2' }}</span>
+              <span class="original-price">${{ product.originalPrice | number:'1.2-2' }}</span>
+            </div>
+            <div class="savings-info">
+              <span class="savings">You save ${{ (product.originalPrice - product.price) | number:'1.2-2' }}</span>
+              <span class="discount-percent">({{ product.discountPercentage }}% OFF)</span>
+            </div>
+          </div>
+          <div *ngIf="!product.hasPromotion" class="regular-pricing">
+            <span class="current-price">${{ product.price | number:'1.2-2' }}</span>
+          </div>
         </div>
-        <div class="meta-item">
-          <h4>Product ID</h4>
-          <p>#{{ product.id }}</p>
+
+        <!-- ✅ Resto del contenido... -->
+        <div class="stock-info">
+          <span *ngIf="product.stockQuantity > 0" class="in-stock">
+            ✅ {{ product.stockQuantity }} in stock
+          </span>
+          <span *ngIf="product.stockQuantity === 0" class="out-of-stock">
+            ❌ Out of stock
+          </span>
         </div>
-        <div class="meta-item">
-          <h4>Category</h4>
-          <p>General</p>
+
+        <div class="quantity-section" *ngIf="product.stockQuantity > 0">
+          <label for="quantity">Quantity:</label>
+          <div class="quantity-controls">
+            <button (click)="decrementQuantity()" class="qty-btn">-</button>
+            <input 
+              type="number" 
+              id="quantity"
+              [(ngModel)]="quantity" 
+              min="1" 
+              [max]="product.stockQuantity"
+              class="qty-input">
+            <button (click)="incrementQuantity()" class="qty-btn">+</button>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button 
+            *ngIf="product.stockQuantity > 0"
+            (click)="addToCart()" 
+            class="add-to-cart-btn"
+            [class.promotional]="product.hasPromotion">
+            <i class="fas fa-shopping-cart"></i>
+            Add to Cart
+            <span *ngIf="product.hasPromotion" class="promo-text">
+              ({{ product.discountPercentage }}% OFF!)
+            </span>
+          </button>
+          
+          <button 
+            *ngIf="product.stockQuantity === 0"
+            disabled 
+            class="out-of-stock-btn">
+            Out of Stock
+          </button>
         </div>
       </div>
     </div>

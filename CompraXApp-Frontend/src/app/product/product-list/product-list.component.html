@@ -140,50 +140,64 @@
     <div *ngIf="viewMode === 'grid'" class="products-grid">
       <div *ngFor="let product of products; trackBy: trackByProductId" 
            class="product-card fade-in">
+        
+        <!-- ✅ AGREGAR: Badge de promoción -->
+        <div *ngIf="product.hasPromotion" class="promotion-badge">
+          -{{ product.discountPercentage }}% OFF
+        </div>
+        
         <div class="product-image-container">
           <img 
             [src]="product.imageUrl || 'assets/default-product.png'" 
             [alt]="product.name" 
             class="product-image"
+            loading="lazy"
             (error)="onImageError($event)">
-          
-          <span class="stock-badge" 
-                [class.in-stock]="product.stockQuantity > 20"
-                [class.low-stock]="product.stockQuantity > 0 && product.stockQuantity <= 20"
-                [class.out-of-stock]="product.stockQuantity === 0">
-            {{ product.stockQuantity > 0 ? 'In Stock' : 'Out of Stock' }}
-          </span>
-          
-          <div class="product-overlay">
-            <button 
-              (click)="viewProduct(product)"
-              class="btn btn-primary btn-sm">
-              Quick View
-            </button>
-          </div>
         </div>
         
         <div class="product-info">
           <h3 class="product-name">{{ product.name }}</h3>
-          <p class="product-description">
-            {{ product.description || 'No description available' }}
-          </p>
+          <p class="product-description">{{ product.description }}</p>
           
-          <div class="product-footer">
-            <div class="product-price">
+          <!-- ✅ ACTUALIZAR: Mostrar precios con descuento -->
+          <div class="product-pricing">
+            <div *ngIf="product.hasPromotion" class="price-with-discount">
+              <span class="current-price">${{ product.price | number:'1.2-2' }}</span>
+              <span class="original-price">${{ product.originalPrice | number:'1.2-2' }}</span>
+              <span class="discount-badge">{{ product.discountPercentage }}% OFF</span>
+            </div>
+            <div *ngIf="!product.hasPromotion" class="regular-price">
               <span class="current-price">${{ product.price | number:'1.2-2' }}</span>
             </div>
-            
-            <div class="product-actions">
-              <button 
-                *ngIf="currentUser"
-                (click)="addToCart(product)"
-                [disabled]="product.stockQuantity === 0"
-                class="btn btn-secondary btn-sm add-to-cart-btn">
-                <span *ngIf="product.stockQuantity > 0">🛒 Add to Cart</span>
-                <span *ngIf="product.stockQuantity === 0">Out of Stock</span>
-              </button>
-            </div>
+          </div>
+          
+          <!-- ✅ AGREGAR: Título de promoción -->
+          <div *ngIf="product.hasPromotion" class="promotion-info">
+            <small class="promotion-title">{{ product.promotionTitle }}</small>
+          </div>
+          
+          <div class="product-stock">
+            <span *ngIf="product.stockQuantity > 0" class="in-stock">
+              {{ product.stockQuantity }} in stock
+            </span>
+            <span *ngIf="product.stockQuantity === 0" class="out-of-stock">
+              Out of Stock
+            </span>
+          </div>
+          
+          <div class="product-actions">
+            <button 
+              (click)="viewProduct(product)" 
+              class="btn btn-primary">
+              View Details
+            </button>
+            <button 
+              (click)="addToCart(product)" 
+              [disabled]="product.stockQuantity === 0"
+              class="btn btn-secondary">
+              <span *ngIf="product.stockQuantity > 0">Add to Cart</span>
+              <span *ngIf="product.stockQuantity === 0">Out of Stock</span>
+            </button>
           </div>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { ProductService, ProductResponse } from '../product.service'; // ✅ Usa
 import { CartService } from '../../cart/cart.service';
 import { AuthService, LoginResponse } from '../../auth/auth.service'; // ✅ Usar LoginResponse
 import { Product } from '../../models/Product';
+import { PromotionService, ProductWithPromotion } from '../../services/promotion.service';
 
 @Component({
   selector: 'app-product-list',
@@ -15,10 +16,10 @@ import { Product } from '../../models/Product';
   styleUrl: './product-list.component.css'
 })
 export class ProductListComponent implements OnInit {
-  products: ProductResponse[] = []; // ✅ Cambiar tipo
-  allProducts: ProductResponse[] = []; // ✅ Cambiar tipo
+  products: ProductWithPromotion[] = []; // ✅ Cambiar tipo
+  allProducts: ProductWithPromotion[] = []; // ✅ Cambiar tipo
   isLoading = true;
-  currentUser: LoginResponse | null = null; // ✅ Cambiar tipo
+  currentUser: LoginResponse | null = null;
   viewMode: 'grid' | 'list' = 'grid';
   searchKeyword = '';
   minPrice?: number;
@@ -28,36 +29,70 @@ export class ProductListComponent implements OnInit {
     private productService: ProductService,
     private cartService: CartService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private promotionService: PromotionService // ✅ Inyectar
   ) { }
 
   ngOnInit(): void {
-    this.currentUser = this.authService.currentUserValue;
+    this.loadProducts();
     this.authService.currentUser.subscribe(user => {
       this.currentUser = user;
     });
-    
-    this.loadProducts();
+
+    // ✅ Escuchar cambios en promociones
+    this.promotionService.activePromotions$.subscribe(promotions => {
+      if (promotions.length > 0 && this.allProducts.length > 0) {
+        this.refreshProductsWithPromotions();
+      }
+    });
+  }
+
+  // ✅ NUEVO: Refrescar productos cuando cambien las promociones
+  refreshProductsWithPromotions(): void {
+    this.products = this.promotionService.applyPromotionsToProducts(this.allProducts);
+    this.filterProducts();
   }
 
   loadProducts(): void {
     this.isLoading = true;
     
-    this.productService.getProducts(
-      this.searchKeyword || undefined,
-      this.minPrice,
-      this.maxPrice
-    ).subscribe({
-      next: (products) => {
-        this.allProducts = products.filter(p => p.active);
-        this.products = [...this.allProducts];
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error("Failed to load products", err);
-        this.isLoading = false;
-      }
-    });
+    this.productService.getProducts(this.searchKeyword, this.minPrice, this.maxPrice)
+      .subscribe({
+        next: (products) => {
+          this.allProducts = products;
+          this.products = [...products];
+          this.isLoading = false;
+          console.log('✅ Products loaded with promotions:', products);
+        },
+        error: (error) => {
+          console.error('❌ Error loading products:', error);
+          this.isLoading = false;
+        }
+      });
+  }
+
+  // ✅ ACTUALIZAR: Filtrar productos considerando precio con descuento
+  filterProducts(): void {
+    let filtered = this.allProducts;
+    
+    if (this.searchKeyword && this.searchKeyword.trim()) {
+      const keyword = this.searchKeyword.toLowerCase().trim();
+      filtered = filtered.filter(product => 
+        product.name.toLowerCase().includes(keyword) ||
+        (product.description && product.description.toLowerCase().includes(keyword))
+      );
+    }
+
+    // ✅ Usar precio con descuento para filtros
+    if (this.minPrice !== undefined && this.minPrice !== null && this.minPrice > 0) {
+      filtered = filtered.filter(product => product.price >= this.minPrice!);
+    }
+
+    if (this.maxPrice !== undefined && this.maxPrice !== null && this.maxPrice > 0) {
+      filtered = filtered.filter(product => product.price <= this.maxPrice!);
+    }
+
+    this.products = filtered;
   }
 
   onSearch(): void {
@@ -66,33 +101,6 @@ export class ProductListComponent implements OnInit {
 
   onPriceChange(): void {
     this.filterProducts();
-  }
-
-  filterProducts(): void {
-    // Filtrar localmente para respuesta más rápida
-    let filtered = this.allProducts;
-    
-    // Filtro por palabra clave
-    if (this.searchKeyword && this.searchKeyword.trim()) {
-      const keyword = this.searchKeyword.toLowerCase().trim();
-      filtered = filtered.filter(product => 
-        product.name.toLowerCase().includes(keyword) ||
-        // ✅ CORREGIR: Verificar si description existe
-        (product.description && product.description.toLowerCase().includes(keyword))
-      );
-    }
-
-    // Filtro por precio mínimo
-    if (this.minPrice !== undefined && this.minPrice !== null && this.minPrice > 0) {
-      filtered = filtered.filter(product => product.price >= this.minPrice!);
-    }
-
-    // Filtro por precio máximo
-    if (this.maxPrice !== undefined && this.maxPrice !== null && this.maxPrice > 0) {
-      filtered = filtered.filter(product => product.price <= this.maxPrice!);
-    }
-
-    this.products = filtered;
   }
 
   clearFilters(): void {

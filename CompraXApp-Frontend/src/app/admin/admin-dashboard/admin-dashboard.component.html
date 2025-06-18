@@ -49,30 +49,14 @@
         <a routerLink="/admin/reports"  class="action-btn statistics-btn">
           📊 Product Statistics
         </a>
+         <a routerLink="/admin/promotions" class="action-btn promotions-btn">
+          <i class="fas fa-gift"></i>
+          Promotions
+        </a>
       </div>
     </div>
 
     <!-- Sales Statistics -->
-    <div class="sales-section" *ngIf="salesStatistics.length > 0">
-      <h2>Product Sales Statistics</h2>
-      <div class="sales-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Product Name</th>
-              <th>Units Sold</th>
-              <th>Total Revenue</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let stat of salesStatistics">
-              <td>{{ stat.productName }}</td>
-              <td>{{ stat.totalQuantitySold }}</td>
-              <td>{{ stat.totalRevenue | currency:'USD':'symbol' }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+    
   </div>
 </div>

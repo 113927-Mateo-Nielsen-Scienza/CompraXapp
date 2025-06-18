@@ -30,7 +30,6 @@
   <div *ngIf="!isLoading && hasItems()" class="cart-content">
     <div class="cart-items" *ngIf="cart && cart.items">
       <div class="cart-item" *ngFor="let item of cart.items">
-        <!-- ✅ FIX: Usar imagen real del producto -->
         <div class="item-image">
           <img 
             [src]="getProductImageUrl(item)"
@@ -42,8 +41,21 @@
         
         <div class="item-details">
           <h3 class="item-name">{{ item.productName }}</h3>
-          <p class="item-price">${{ item.pricePerUnit | number:'1.2-2' }} each</p>
-          <p class="item-stock">Product ID: {{ item.productId }}</p>
+          
+          <!-- ✅ MOSTRAR precios con promociones -->
+          <div class="item-pricing">
+            <div *ngIf="item.hasPromotion" class="promotional-pricing">
+              <span class="current-price">${{ item.pricePerUnit | number:'1.2-2' }} each</span>
+              <span class="original-price">${{ item.originalPrice | number:'1.2-2' }}</span>
+              <span class="discount-badge">{{ item.discountPercentage }}% OFF</span>
+              <div *ngIf="item.promotionTitle" class="promotion-title">{{ item.promotionTitle }}</div>
+            </div>
+            <div *ngIf="!item.hasPromotion" class="regular-pricing">
+              <span class="current-price">${{ item.pricePerUnit | number:'1.2-2' }} each</span>
+            </div>
+          </div>
+          
+        
         </div>
         
         <div class="item-quantity">
@@ -76,7 +88,14 @@
         
         <div class="item-total">
           <span class="total-label">Total</span>
-          <span class="total-amount">${{ (item.pricePerUnit * item.quantity) | number:'1.2-2' }}</span>
+          <!-- ✅ MOSTRAR totales con descuentos -->
+          <div *ngIf="item.hasPromotion" class="total-with-discount">
+            <span class="discounted-total">${{ (item.pricePerUnit * item.quantity) | number:'1.2-2' }}</span>
+            <span class="original-total">${{ (item.originalPrice! * item.quantity) | number:'1.2-2' }}</span>
+          </div>
+          <div *ngIf="!item.hasPromotion" class="regular-total">
+            <span class="total-amount">${{ (item.pricePerUnit * item.quantity) | number:'1.2-2' }}</span>
+          </div>
         </div>
         
         <div class="item-actions">
@@ -87,15 +106,23 @@
       </div>
     </div>
 
-    <!-- Cart Summary -->
+    <!-- ✅ RESUMEN con descuentos -->
     <div class="cart-summary" *ngIf="cart && cart.items && cart.items.length > 0">
       <div class="summary-card">
         <h3>Cart Summary</h3>
         
         <div class="summary-details">
+          <div class="summary-row" *ngIf="getTotalDiscount() > 0">
+            <span class="summary-label">Subtotal:</span>
+            <span class="summary-value">${{ getOriginalTotal() | number:'1.2-2' }}</span>
+          </div>
+          <div class="summary-row" *ngIf="getTotalDiscount() > 0">
+            <span class="summary-label discount">Discounts:</span>
+            <span class="summary-value discount">-${{ getTotalDiscount() | number:'1.2-2' }}</span>
+          </div>
           <div class="summary-row">
-            <span class="summary-label">Subtotal ({{ cart.items.length }} items):</span>
-            <span class="summary-value">${{ cart.totalAmount | number:'1.2-2' }}</span>
+            <span class="summary-label">Items ({{ cart.items.length }}):</span>
+            <span class="summary-value">${{ getTotal() | number:'1.2-2' }}</span>
           </div>
           <div class="summary-row">
             <span class="summary-label">Shipping:</span>
@@ -103,19 +130,18 @@
           </div>
           <div class="summary-row total-row">
             <span class="summary-label"><strong>Total:</strong></span>
-            <span class="summary-value"><strong>${{ cart.totalAmount | number:'1.2-2' }}</strong></span>
+            <span class="summary-value"><strong>${{ getTotal() | number:'1.2-2' }}</strong></span>
           </div>
         </div>
         
         <div class="cart-actions">
-          <button class="checkout-btn" (click)="proceedToCheckout()">
+          <button class="btn btn-outline clear-btn" (click)="clearCart()">
+            <i class="fas fa-trash"></i>
+            Clear Cart
+          </button>
+          <button class="btn btn-primary checkout-btn" (click)="proceedToCheckout()">
             <i class="fas fa-credit-card"></i>
             Proceed to Checkout
-          </button>
-          
-          <button class="clear-cart-btn" (click)="clearCart()">
-            <i class="fas fa-trash"></i>
-            Empty Cart
           </button>
         </div>
       </div>

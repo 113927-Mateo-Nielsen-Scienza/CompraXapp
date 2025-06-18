@@ -169,11 +169,11 @@ export class OrderHistoryComponent implements OnInit {
   // ✅ CAMBIAR: Métodos privados que usa el template a públicos
   public getStatusText(status: string): string { // ✅ private -> public
     const statusTexts: { [key: string]: string } = {
-      'PENDING': 'Pendiente',
-      'PROCESSING': 'Procesando',
-      'SHIPPED': 'Enviado',
-      'DELIVERED': 'Entregado',
-      'CANCELLED': 'Cancelado'
+      'PENDING': 'Pending',
+      'PROCESSING': 'Processing', 
+      'SHIPPED': 'Shipped',
+      'DELIVERED': 'Delivered',
+      'CANCELLED': 'Cancelled'
     };
     return statusTexts[status] || status;
   }
@@ -332,8 +332,9 @@ export class OrderHistoryComponent implements OnInit {
     const shippingTexts: { [key: string]: string } = {
       'PENDING': 'Pending',
       'PROCESSING': 'Preparing',
-      'SHIPPED': 'On the way',
-      'DELIVERED': 'Delivered'
+      'SHIPPED': 'In Transit',
+      'DELIVERED': 'Delivered',
+      'CANCELLED': 'Cancelled'
     };
     return shippingTexts[shippingStatus] || shippingStatus;
   }
@@ -405,15 +406,14 @@ export class OrderHistoryComponent implements OnInit {
     this.loading = true;
     this.errorMessage = '';
     
-    // Usar el método de PDF en lugar del texto
     this.orderService.generateReceiptPDF(orderId).then(() => {
       this.loading = false;
-      this.successMessage = '¡Comprobante descargado exitosamente!';
+      this.successMessage = 'Receipt downloaded successfully!';
       setTimeout(() => this.successMessage = '', 3000);
     }).catch(error => {
       this.loading = false;
       console.error('Error downloading PDF receipt:', error);
-      this.errorMessage = 'Error al descargar el comprobante. Por favor, intenta de nuevo.';
+      this.errorMessage = 'Error downloading receipt. Please try again.';
       setTimeout(() => this.errorMessage = '', 5000);
     });
   }
@@ -432,7 +432,7 @@ export class OrderHistoryComponent implements OnInit {
       }
     } catch (error) {
       console.error('Error loading receipt:', error);
-      this.errorMessage = 'Error al cargar el comprobante.';
+      this.errorMessage = 'Error loading receipt.';
     } finally {
       this.loading = false;
     }
@@ -447,7 +447,7 @@ export class OrderHistoryComponent implements OnInit {
     modal.innerHTML = `
       <div class="modal-content">
         <div class="modal-header">
-          <h3>📄 Comprobante - Pedido #${order.id}</h3>
+          <h3>📄 Receipt - Order #${order.id}</h3>
           <button class="close-btn" onclick="this.closest('.receipt-modal').remove()">×</button>
         </div>
         <div class="modal-body">
@@ -457,13 +457,13 @@ export class OrderHistoryComponent implements OnInit {
         </div>
         <div class="modal-footer">
           <button class="btn-download" id="download-btn-${order.id}">
-            📥 Descargar PDF
+            📥 Download PDF
           </button>
           <button class="btn-print" onclick="window.print()">
-            🖨️ Imprimir
+            🖨️ Print
           </button>
           <button class="btn-close" onclick="this.closest('.receipt-modal').remove()">
-            Cerrar
+            Close
           </button>
         </div>
       </div>
@@ -480,7 +480,7 @@ export class OrderHistoryComponent implements OnInit {
   }
 
   private generateHTMLReceipt(order: OrderDTO): string {
-    const orderDate = new Date(order.orderDate).toLocaleDateString('es-ES', {
+    const orderDate = new Date(order.orderDate).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -511,43 +511,43 @@ export class OrderHistoryComponent implements OnInit {
 
     return `
       <div class="receipt-header">
-        <h2>COMPROBANTE DE COMPRA</h2>
+        <h2>PURCHASE RECEIPT</h2>
         <h3>CompraXApp</h3>
       </div>
       
       <div class="receipt-info">
         <div class="info-row">
-          <span class="label">Pedido #:</span>
+          <span class="label">Order #:</span>
           <span class="value">${order.id}</span>
         </div>
         <div class="info-row">
-          <span class="label">Fecha:</span>
+          <span class="label">Date:</span>
           <span class="value">${orderDate}</span>
         </div>
         <div class="info-row">
-          <span class="label">Estado:</span>
+          <span class="label">Status:</span>
           <span class="value status-${order.status.toLowerCase()}">${this.getStatusText(order.status)}</span>
         </div>
         <div class="info-row">
-          <span class="label">Cliente:</span>
-          <span class="value">${order.userName || 'Usuario'}</span>
+          <span class="label">Customer:</span>
+          <span class="value">${order.userName || 'User'}</span>
         </div>
         ${order.shippingAddress ? `
         <div class="info-row">
-          <span class="label">Dirección:</span>
+          <span class="label">Address:</span>
           <span class="value">${order.shippingAddress}</span>
         </div>
         ` : ''}
       </div>
 
       <div class="receipt-items">
-        <h4>Productos:</h4>
+        <h4>Products:</h4>
         <table class="items-table">
           <thead>
             <tr>
-              <th>Producto</th>
-              <th>Cant.</th>
-              <th>Precio Unit.</th>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Unit Price</th>
               <th>Subtotal</th>
             </tr>
           </thead>
@@ -565,8 +565,8 @@ export class OrderHistoryComponent implements OnInit {
       </div>
 
       <div class="receipt-footer">
-        <p>¡Gracias por tu compra!</p>
-        <p class="generated-date">Generado el: ${new Date().toLocaleString('es-ES')}</p>
+        <p>Thank you for your purchase!</p>
+        <p class="generated-date">Generated on: ${new Date().toLocaleString('en-US')}</p>
       </div>
     `;
   }

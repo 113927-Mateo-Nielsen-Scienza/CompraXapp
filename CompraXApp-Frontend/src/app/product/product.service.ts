@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-
+import { PromotionService, ProductWithPromotion } from '../services/promotion.service';
+import { map } from 'rxjs/operators';
 // ✅ INTERFACES EXACTAS según backend
 export interface ProductResponse {
   id: number;
@@ -29,21 +30,28 @@ export interface ProductCreateRequest {
 export class ProductService {
   private apiUrl = `${environment.apiUrl}/products`;
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    private promotionService: PromotionService // ✅ Inyectar PromotionService
+  ) { }
 
   // ✅ ENDPOINT EXACTO: GET /api/products (PÚBLICO)
-  getProducts(keyword?: string, minPrice?: number, maxPrice?: number): Observable<ProductResponse[]> {
+  getProducts(keyword?: string, minPrice?: number, maxPrice?: number): Observable<ProductWithPromotion[]> {
     let params = new HttpParams();
     if (keyword) params = params.set('keyword', keyword);
     if (minPrice !== undefined) params = params.set('minPrice', minPrice.toString());
     if (maxPrice !== undefined) params = params.set('maxPrice', maxPrice.toString());
     
-    return this.http.get<ProductResponse[]>(this.apiUrl, { params });
+    return this.http.get<ProductResponse[]>(this.apiUrl, { params }).pipe(
+      map(products => this.promotionService.applyPromotionsToProducts(products))
+    );
   }
 
   // ✅ ENDPOINT EXACTO: GET /api/products/{id} (PÚBLICO)
-  getProductById(id: number): Observable<ProductResponse> {
-    return this.http.get<ProductResponse>(`${this.apiUrl}/${id}`);
+  getProductById(id: number): Observable<ProductWithPromotion> {
+    return this.http.get<ProductResponse>(`${this.apiUrl}/${id}`).pipe(
+      map(product => this.promotionService.applyPromotionToProduct(product))
+    );
   }
 
   // ✅ MÉTODOS ADMIN - endpoints exactos
