@@ -357,7 +357,255 @@
   transform: translateY(-1px);
 }
 
-/* Responsive Design */
+/* ✅ AGREGAR: Estilos para resumen del pedido */
+.payment-summary {
+  background: white;
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing-8);
+  margin-bottom: var(--spacing-6);
+  border: 2px solid rgba(37, 211, 102, 0.1);
+}
+
+.payment-summary h3 {
+  font-size: var(--font-size-xl);
+  color: var(--gray-900);
+  margin: 0 0 var(--spacing-6) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  font-weight: 700;
+}
+
+.payment-summary h3::before {
+  content: '🛒';
+  font-size: var(--font-size-xl);
+}
+
+.order-items {
+  margin-bottom: var(--spacing-6);
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-4);
+  margin-bottom: var(--spacing-3);
+  background: var(--gray-50);
+  border-radius: var(--border-radius-lg);
+  border-left: 4px solid #25d366;
+  transition: all var(--transition-fast);
+}
+
+.item:hover {
+  background: rgba(37, 211, 102, 0.05);
+  transform: translateX(5px);
+}
+
+.item:last-child {
+  margin-bottom: 0;
+}
+
+.item span:first-child {
+  font-size: var(--font-size-base);
+  color: var(--gray-700);
+  font-weight: 500;
+  flex: 1;
+}
+
+.item span:last-child {
+  font-size: var(--font-size-lg);
+  color: var(--gray-900);
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+}
+
+.total {
+  padding: var(--spacing-4) 0;
+  border-top: 3px solid #25d366;
+  margin-top: var(--spacing-4);
+  text-align: right;
+}
+
+.total strong {
+  font-size: var(--font-size-xl);
+  color: #128c7e;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-2);
+  font-family: 'Courier New', monospace;
+}
+
+.total strong::before {
+  content: '💰';
+  font-size: var(--font-size-lg);
+}
+
+/* ✅ AGREGAR: Estilos para formulario de pago */
+.payment-form {
+  background: white;
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing-8);
+  margin-bottom: var(--spacing-6);
+  text-align: center;
+}
+
+.btn-whatsapp {
+  background: linear-gradient(135deg, #25d366, #128c7e);
+  color: white;
+  border: none;
+  padding: var(--spacing-5) var(--spacing-8);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-3);
+  text-decoration: none;
+  min-width: 300px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-whatsapp::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-whatsapp:hover::before {
+  left: 100%;
+}
+
+.btn-whatsapp:hover {
+  background: linear-gradient(135deg, #128c7e, #0d5d50);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(37, 211, 102, 0.4);
+}
+
+.btn-whatsapp:active {
+  transform: translateY(-1px);
+}
+
+.btn-whatsapp i {
+  font-size: var(--font-size-2xl);
+}
+
+/* ✅ AGREGAR: Estilos para estado de carga */
+.loading-state {
+  background: white;
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing-8);
+  margin-bottom: var(--spacing-6);
+  text-align: center;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(37, 211, 102, 0.2);
+  border-top: 4px solid #25d366;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto var(--spacing-4) auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-state p {
+  font-size: var(--font-size-lg);
+  color: var(--gray-600);
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ✅ AGREGAR: Estilos para mensaje de error */
+.error-message {
+  background: var(--error-bg);
+  border: 2px solid var(--error-color);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-6);
+  margin-bottom: var(--spacing-6);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.error-message i {
+  font-size: var(--font-size-xl);
+  color: var(--error-color);
+  flex-shrink: 0;
+}
+
+.error-message p {
+  font-size: var(--font-size-base);
+  color: var(--error-dark);
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ✅ AGREGAR: Estilos para acciones de pago */
+.payment-actions {
+  background: white;
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing-6);
+  text-align: center;
+}
+
+.btn-secondary {
+  background: var(--gray-200);
+  color: var(--gray-700);
+  border: none;
+  padding: var(--spacing-4) var(--spacing-6);
+  border-radius: var(--border-radius-full);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  text-decoration: none;
+  min-width: 150px;
+  justify-content: center;
+}
+
+.btn-secondary:hover {
+  background: var(--gray-300);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.btn-secondary i {
+  font-size: var(--font-size-sm);
+}
+
+/* ✅ MEJORAR: Responsive Design */
 @media (max-width: 768px) {
   .whatsapp-container {
     padding: var(--spacing-4);
@@ -373,7 +621,10 @@
   
   .payment-steps,
   .payment-info,
-  .message-preview {
+  .message-preview,
+  .payment-summary,
+  .payment-form,
+  .payment-actions {
     padding: var(--spacing-6);
   }
   
@@ -386,13 +637,33 @@
     margin-bottom: var(--spacing-2);
   }
   
-  .whatsapp-button {
+  .btn-whatsapp {
     width: 100%;
-    justify-content: center;
+    min-width: auto;
+    font-size: var(--font-size-lg);
+    padding: var(--spacing-4) var(--spacing-6);
   }
   
   .phone-number {
     font-size: var(--font-size-lg);
+  }
+  
+  .item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-2);
+  }
+  
+  .item span:last-child {
+    align-self: flex-end;
+  }
+  
+  .total {
+    text-align: center;
+  }
+  
+  .total strong {
+    justify-content: center;
   }
 }
 
@@ -407,5 +678,14 @@
   
   .message-content {
     font-size: var(--font-size-xs);
+  }
+  
+  .btn-whatsapp {
+    font-size: var(--font-size-base);
+    padding: var(--spacing-3) var(--spacing-4);
+  }
+  
+  .btn-whatsapp i {
+    font-size: var(--font-size-lg);
   }
 }

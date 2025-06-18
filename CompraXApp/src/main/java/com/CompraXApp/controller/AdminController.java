@@ -31,33 +31,16 @@ public class AdminController {
     public ResponseEntity<List<ProductSalesDTO>> getProductSalesStatistics() {
         List<ProductSalesDTO> stats = reportingService.getProductSalesStatistics();
         return ResponseEntity.ok(stats);
-    }
-
-    // ✅ CORREGIDO: Ruta sin duplicar "reports"
-    @GetMapping("/reports/sales/monthly")
-    public ResponseEntity<List<SalesReportDTO>> getMonthlySalesReport(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
-            @RequestParam(defaultValue = "12") int months) {
-        
-        List<SalesReportDTO> report;
-        if (startDate != null && endDate != null) {
-            report = reportingService.getSalesReportByMonth(startDate, endDate);
-        } else {
-            report = reportingService.getSalesReportForLastMonths(months);
-        }
-        return ResponseEntity.ok(report);
-    }
-
-    @GetMapping("/reports/sales/daily")
-    public ResponseEntity<List<SalesReportDTO>> getDailySalesReport(
+    }    // ✅ SIMPLIFICADO: Reportes básicos que funcionan
+    @GetMapping("/reports/sales/period")
+    public ResponseEntity<SalesReportDTO> getSalesReportForPeriod(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             @RequestParam(defaultValue = "30") int days) {
         
-        List<SalesReportDTO> report;
+        SalesReportDTO report;
         if (startDate != null && endDate != null) {
-            report = reportingService.getSalesReportByDay(startDate, endDate);
+            report = reportingService.getSalesReportForPeriod(startDate, endDate);
         } else {
             report = reportingService.getSalesReportForLastDays(days);
         }
@@ -76,16 +59,14 @@ public class AdminController {
             statistics = reportingService.getUserPurchaseStatistics();
         }
         return ResponseEntity.ok(statistics);
-    }
-
-    @GetMapping("/reports/summary")
+    }    @GetMapping("/reports/summary")
     public ResponseEntity<Map<String, Object>> getReportsSummary() {
         Map<String, Object> summary = new HashMap<>();
         
         // Estadísticas generales
         summary.put("productSales", reportingService.getProductSalesStatistics());
         summary.put("userStatistics", reportingService.getUserPurchaseStatistics());
-        summary.put("monthlySales", reportingService.getSalesReportForLastMonths(6));
+        summary.put("salesReport", reportingService.getSalesReportForLastDays(30));
         
         return ResponseEntity.ok(summary);
     }

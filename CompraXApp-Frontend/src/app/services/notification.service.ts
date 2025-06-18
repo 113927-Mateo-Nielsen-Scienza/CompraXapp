@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { environment } from '../../environments/environment';
@@ -20,10 +20,11 @@ export interface Notification {
 @Injectable({
   providedIn: 'root'
 })
-export class NotificationService {
+export class NotificationService implements OnDestroy {
   private apiUrl = `${environment.apiUrl}/notifications`;
   private notificationsSubject = new BehaviorSubject<Notification[]>([]);
   public notifications$ = this.notificationsSubject.asObservable();
+  private refreshInterval: any;
 
   constructor(private http: HttpClient) {}
 
@@ -114,5 +115,22 @@ export class NotificationService {
       case 'PROMOTION': return 'warning';
       default: return 'primary';
     }
+  }
+
+  startAutoRefresh(): void {
+    // Actualizar cada 30 segundos
+    this.refreshInterval = setInterval(() => {
+      this.loadNotifications();
+    }, 30000);
+  }
+
+  stopAutoRefresh(): void {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.stopAutoRefresh();
   }
 }

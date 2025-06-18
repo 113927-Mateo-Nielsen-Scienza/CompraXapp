@@ -250,20 +250,82 @@ export class OrderDetailsComponent implements OnInit {
     return this.order?.status === 'PENDING' || this.order?.status === 'CONFIRMED';
   }
 
-  // Descargar factura
-  downloadInvoice(): void {
-    if (this.order) {
-      alert(`Downloading invoice for order #${this.order.id}`);
+  // ✅ AGREGAR: Método faltante cancelOrder
+  cancelOrder(): void {
+    if (!this.order) return;
+    
+    const confirmation = confirm(`¿Estás seguro de que quieres cancelar el pedido #${this.order.id}?`);
+    
+    if (confirmation) {
+      this.loading = true;
+      // TODO: Implementar cancelación en el backend
+      console.log('Cancelling order:', this.order.id);
+      
+      // Simulación por ahora - reemplazar con llamada real al backend
+      setTimeout(() => {
+        if (this.order) {
+          this.order.status = 'CANCELLED';
+        }
+        this.loading = false;
+        alert('Pedido cancelado exitosamente');
+      }, 1000);
+      
+      // ✅ IMPLEMENTACIÓN REAL cuando el backend tenga el endpoint:
+      /*
+      this.orderService.cancelOrder(this.order.id).subscribe({
+        next: (updatedOrder) => {
+          this.order = updatedOrder;
+          this.loading = false;
+          alert('Pedido cancelado exitosamente');
+        },
+        error: (error) => {
+          this.loading = false;
+          console.error('Error cancelling order:', error);
+          alert('Error al cancelar el pedido. Inténtalo de nuevo.');
+        }
+      });
+      */
     }
   }
 
-  // Cancelar pedido
-  cancelOrder(): void {
-    if (!this.order) return;
+  // ✅ MEJORAR: downloadInvoice method para usar PDF
+  downloadInvoice(): void {
+    if (this.order) {
+      // ✅ Usar el nuevo método de PDF
+      this.orderService.generateReceiptPDF(this.order.id).then(() => {
+        console.log('Invoice downloaded successfully');
+      }).catch(error => {
+        console.error('Error downloading invoice:', error);
+        alert('Error downloading invoice. Please try again.');
+      });
+    }
+  }
 
-    const confirmed = confirm('Are you sure you want to cancel this order?');
-    if (confirmed) {
-      alert('Order cancellation requested');
+  // ✅ AGREGAR: Ver comprobante method
+  viewReceipt(): void {
+    if (this.order) {
+      this.orderService.getReceipt(this.order.id).subscribe({
+        next: (response) => {
+          // Mostrar en modal o nueva ventana
+          const newWindow = window.open('', '_blank');
+          if (newWindow) {
+            newWindow.document.write(`
+              <html>
+                <head><title>Comprobante - Pedido #${this.order!.id}</title></head>
+                <body>
+                  <pre style="font-family: monospace; padding: 20px;">
+                    ${response.receipt}
+                  </pre>
+                </body>
+              </html>
+            `);
+          }
+        },
+        error: (error) => {
+          console.error('Error loading receipt:', error);
+          alert('Error loading receipt. Please try again.');
+        }
+      });
     }
   }
 

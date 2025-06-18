@@ -14,11 +14,19 @@ const routes: Routes = [
   { path: 'products/edit/:id', component: ProductFormComponent },
   { path: 'users', component: AdminUsersComponent },
   { path: 'orders', component: AdminOrdersComponent },
-  { path: 'settings', component: AdminSettingsComponent } 
+  { path: 'settings', component: AdminSettingsComponent },
+  {
+    path: 'reports',
+    loadComponent: () =>
+      import('./admin-reports/admin-reports.component').then(
+        (m) => m.AdminReportsComponent
+      ),
+    data: { title: 'Product Statistics' },
+  },
 ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
-export class AdminRoutingModule { }
+export class AdminRoutingModule {}

@@ -15,17 +15,16 @@ public class SalesReportDTO {
     private BigDecimal totalRevenue;
     private BigDecimal averageOrderValue;
     private LocalDateTime periodStart;
-    private LocalDateTime periodEnd;
-
-    public SalesReportDTO(String period, long totalOrders, BigDecimal totalRevenue,
+    private LocalDateTime periodEnd;    // Constructor que recibe los parámetros de las queries
+    public SalesReportDTO(String period, Long totalOrders, BigDecimal totalRevenue,
                          LocalDateTime periodStart, LocalDateTime periodEnd) {
         this.period = period;
-        this.totalOrders = totalOrders;
+        this.totalOrders = totalOrders != null ? totalOrders : 0L;
         this.totalRevenue = totalRevenue != null ? totalRevenue : BigDecimal.ZERO;
 
         // ✅ CORREGIDO: Usar RoundingMode.HALF_UP en lugar de BigDecimal.ROUND_HALF_UP
-        this.averageOrderValue = totalOrders > 0 ?
-            this.totalRevenue.divide(BigDecimal.valueOf(totalOrders), 2, RoundingMode.HALF_UP) :
+        this.averageOrderValue = this.totalOrders > 0 ?
+            this.totalRevenue.divide(BigDecimal.valueOf(this.totalOrders), 2, RoundingMode.HALF_UP) :
             BigDecimal.ZERO;
 
         this.periodStart = periodStart;

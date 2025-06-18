@@ -28,25 +28,21 @@ export class OrderHistoryComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
-  profileForm: FormGroup;
-
+  // ✅ CAMBIAR: Hacer router público para el template
   constructor(
     private orderService: OrderService,
-    private authService: AuthService,
-    public router: Router,
     private userService: UserService,
-    private fb: FormBuilder
-  ) {
-    this.profileForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(2)]],
-      email: ['', [Validators.required, Validators.email]],
-      shippingAddress: ['']
-    });
-  }
+    private authService: AuthService,
+    public router: Router // ✅ CAMBIAR: private -> public
+  ) {}
 
   ngOnInit(): void {
+    if (!this.authService.isLoggedIn()) {
+      this.router.navigate(['/auth/login']);
+      return;
+    }
     this.loadOrders();
-    this.loadProfile();
+    this.loadUserProfile();
   }
 
   loadOrders(page: number = 1): void {
@@ -170,8 +166,28 @@ export class OrderHistoryComponent implements OnInit {
     });
   }
 
-  // ✅ MEJORAR: parsePrice para manejar diferentes tipos
-  private parsePrice(value: any): number {
+  // ✅ CAMBIAR: Métodos privados que usa el template a públicos
+  public getStatusText(status: string): string { // ✅ private -> public
+    const statusTexts: { [key: string]: string } = {
+      'PENDING': 'Pendiente',
+      'PROCESSING': 'Procesando',
+      'SHIPPED': 'Enviado',
+      'DELIVERED': 'Entregado',
+      'CANCELLED': 'Cancelado'
+    };
+    return statusTexts[status] || status;
+  }
+
+  public getItemQuantity(item: any): number { // ✅ private -> public
+    return item.quantity || 1;
+  }
+
+  public getItemPrice(item: any): number { // ✅ private -> public
+    return item.pricePerUnit || item.price || 0;
+  }
+
+  // ✅ CAMBIAR: Todos los métodos que usa el template
+  public parsePrice(value: any): number { // ✅ private -> public
     console.log(`🔍 Parsing price:`, value, `(type: ${typeof value})`);
     
     // ✅ Handle null, undefined, empty string
@@ -205,8 +221,7 @@ export class OrderHistoryComponent implements OnInit {
     return 0;
   }
 
-  // ✅ MEJORAR: parseQuantity para validación
-  private parseQuantity(value: any): number {
+  public parseQuantity(value: any): number { // ✅ private -> public
     console.log(`🔍 Parsing quantity:`, value, `(type: ${typeof value})`);
     
     if (typeof value === 'number' && !isNaN(value) && isFinite(value)) {
@@ -224,6 +239,9 @@ export class OrderHistoryComponent implements OnInit {
     return 1;
   }
 
+ 
+
+
   // ✅ NUEVO: Calcular total del item de forma segura
   getItemTotal(item: any): number {
     const price = this.getItemPrice(item);
@@ -238,30 +256,7 @@ export class OrderHistoryComponent implements OnInit {
     return total;
   }
 
-  // ✅ MEJORAR: getItemPrice con logging
-  getItemPrice(item: any): number {
-    console.log(`🔍 Getting price for item:`, item);
-    
-    // ✅ Primer intento: usar pricePerUnit procesado
-    if (item.pricePerUnit && item.pricePerUnit > 0) {
-      console.log(`🔍 Using pricePerUnit: ${item.pricePerUnit}`);
-      return item.pricePerUnit;
-    }
-    
-    // ✅ Segundo intento: buscar en datos originales
-    if (item.originalData) {
-      const originalPrice = this.findPriceInObject(item.originalData);
-      if (originalPrice > 0) {
-        console.log(`🔍 Found price in original data: ${originalPrice}`);
-        return originalPrice;
-      }
-    }
-    
-    // ✅ Tercer intento: precio estimado basado en el total de la order
-    const estimatedPrice = this.getEstimatedPrice(item);
-    console.log(`🔍 Estimated price for ${item.productName}: ${estimatedPrice}`);
-    return estimatedPrice;
-  }
+ 
 
   // ✅ NUEVO: Buscar precio en cualquier campo del objeto
   private findPriceInObject(obj: any): number {
@@ -303,16 +298,11 @@ export class OrderHistoryComponent implements OnInit {
     return 0;
   }
 
-  loadProfile(): void {
+  loadUserProfile(): void {
     this.isLoading = true;
     this.userService.getMyProfile().subscribe({
       next: (profile: UserProfileResponse) => {
         this.userProfile = profile;
-        this.profileForm.patchValue({
-          name: profile.name,
-          email: profile.email,
-          shippingAddress: profile.shippingAddress || ''
-        });
         this.isLoading = false;
       },
       error: (err: any) => {
@@ -334,16 +324,7 @@ export class OrderHistoryComponent implements OnInit {
     return statusColors[status] || 'secondary';
   }
 
-  getStatusText(status: string): string {
-    const statusTexts: { [key: string]: string } = {
-      'PENDING': 'Pending',
-      'PROCESSING': 'Processing',
-      'SHIPPED': 'Shipped',
-      'DELIVERED': 'Delivered',
-      'CANCELLED': 'Cancelled'
-    };
-    return statusTexts[status] || status;
-  }
+ 
 
   getShippingStatusText(shippingStatus: string): string {
     if (!shippingStatus) return 'Pending';
@@ -396,29 +377,7 @@ export class OrderHistoryComponent implements OnInit {
     });
   }
 
-  // ✅ ADD this missing method
-  getItemQuantity(item: any): number {
-    console.log(`🔍 Getting quantity for item:`, item);
-    
-    // First try: use processed quantity
-    if (item.quantity && item.quantity > 0) {
-      console.log(`🔍 Using processed quantity: ${item.quantity}`);
-      return item.quantity;
-    }
-    
-    // Second try: search in original data
-    if (item.originalData) {
-      const originalQuantity = this.findQuantityInObject(item.originalData);
-      if (originalQuantity > 0) {
-        console.log(`🔍 Found quantity in original data: ${originalQuantity}`);
-        return originalQuantity;
-      }
-    }
-    
-    // Fallback
-    console.log(`🔍 Using fallback quantity: 1`);
-    return 1;
-  }
+ 
 
   // ✅ ADD helper method to find quantity in any field
   private findQuantityInObject(obj: any): number {
@@ -438,4 +397,178 @@ export class OrderHistoryComponent implements OnInit {
     
     return 1;
   }
+
+
+
+  // ✅ NUEVO: Descargar comprobante
+  downloadReceipt(orderId: number): void {
+    this.loading = true;
+    this.errorMessage = '';
+    
+    // Usar el método de PDF en lugar del texto
+    this.orderService.generateReceiptPDF(orderId).then(() => {
+      this.loading = false;
+      this.successMessage = '¡Comprobante descargado exitosamente!';
+      setTimeout(() => this.successMessage = '', 3000);
+    }).catch(error => {
+      this.loading = false;
+      console.error('Error downloading PDF receipt:', error);
+      this.errorMessage = 'Error al descargar el comprobante. Por favor, intenta de nuevo.';
+      setTimeout(() => this.errorMessage = '', 5000);
+    });
+  }
+
+  
+
+  // ✅ NUEVO: Ver comprobante en modal con mejor diseño
+  async viewReceipt(orderId: number): Promise<void> {
+    try {
+      this.loading = true;
+      const response = await this.orderService.getReceipt(orderId).toPromise();
+      const orderDetails = await this.orderService.getOrderById(orderId).toPromise();
+      
+      if (response && orderDetails) {
+        this.showReceiptModal(response.receipt, orderDetails);
+      }
+    } catch (error) {
+      console.error('Error loading receipt:', error);
+      this.errorMessage = 'Error al cargar el comprobante.';
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  private showReceiptModal(receiptContent: string, order: OrderDTO): void {
+    const modal = document.createElement('div');
+    modal.className = 'receipt-modal';
+    
+    const componentInstance = this;
+    
+    modal.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>📄 Comprobante - Pedido #${order.id}</h3>
+          <button class="close-btn" onclick="this.closest('.receipt-modal').remove()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="receipt-preview">
+            ${this.generateHTMLReceipt(order)}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-download" id="download-btn-${order.id}">
+            📥 Descargar PDF
+          </button>
+          <button class="btn-print" onclick="window.print()">
+            🖨️ Imprimir
+          </button>
+          <button class="btn-close" onclick="this.closest('.receipt-modal').remove()">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    const downloadBtn = document.getElementById(`download-btn-${order.id}`);
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', () => {
+        componentInstance.downloadReceipt(order.id);
+      });
+    }
+  }
+
+  private generateHTMLReceipt(order: OrderDTO): string {
+    const orderDate = new Date(order.orderDate).toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    let itemsHTML = '';
+    let total = 0;
+
+    if (order.items && order.items.length > 0) {
+      order.items.forEach((item: any) => {
+        const quantity = this.getItemQuantity(item);
+        const price = this.getItemPrice(item);
+        const subtotal = quantity * price;
+        total += subtotal;
+
+        itemsHTML += `
+          <tr>
+            <td>${item.productName}</td>
+            <td class="text-center">${quantity}</td>
+            <td class="text-right">$${price.toFixed(2)}</td>
+            <td class="text-right">$${subtotal.toFixed(2)}</td>
+          </tr>
+        `;
+      });
+    }
+
+    return `
+      <div class="receipt-header">
+        <h2>COMPROBANTE DE COMPRA</h2>
+        <h3>CompraXApp</h3>
+      </div>
+      
+      <div class="receipt-info">
+        <div class="info-row">
+          <span class="label">Pedido #:</span>
+          <span class="value">${order.id}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Fecha:</span>
+          <span class="value">${orderDate}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Estado:</span>
+          <span class="value status-${order.status.toLowerCase()}">${this.getStatusText(order.status)}</span>
+        </div>
+        <div class="info-row">
+          <span class="label">Cliente:</span>
+          <span class="value">${order.userName || 'Usuario'}</span>
+        </div>
+        ${order.shippingAddress ? `
+        <div class="info-row">
+          <span class="label">Dirección:</span>
+          <span class="value">${order.shippingAddress}</span>
+        </div>
+        ` : ''}
+      </div>
+
+      <div class="receipt-items">
+        <h4>Productos:</h4>
+        <table class="items-table">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Cant.</th>
+              <th>Precio Unit.</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHTML}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="receipt-total">
+        <div class="total-row">
+          <span class="total-label">TOTAL:</span>
+          <span class="total-value">$${(order.totalAmount || total).toFixed(2)}</span>
+        </div>
+      </div>
+
+      <div class="receipt-footer">
+        <p>¡Gracias por tu compra!</p>
+        <p class="generated-date">Generado el: ${new Date().toLocaleString('es-ES')}</p>
+      </div>
+    `;
+  }
+
 }

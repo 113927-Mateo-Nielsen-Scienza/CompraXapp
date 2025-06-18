@@ -22,10 +22,12 @@ export type { AdminPaymentDTO as PaymentDTO };
 
 // ✅ INTERFACES EXACTAS según backend
 export interface ProductSalesDTO {
-  productId: number;
+  productId: number;          // ✅ Long se convierte a number
   productName: string;
-  totalQuantitySold: number;
-  totalRevenue: number;
+  totalQuantitySold: number;  // ✅ long se convierte a number
+  totalRevenue: number;       // ✅ BigDecimal se convierte a number
+  category?: string;
+  averageRating?: number;
 }
 
 export interface UserDTO {
@@ -37,11 +39,60 @@ export interface UserDTO {
   active: boolean;
 }
 
+export interface ProductSalesFilter {
+  startDate?: string;
+  endDate?: string;
+  category?: string;
+  limit?: number;
+  sortBy?: 'quantity' | 'revenue';
+  period?: 'week' | 'month' | '3months' | '6months' | 'year';
+}
+
+// ✅ CORREGIR: Interfaces que coincidan con tu backend
+export interface SalesReportDTO {
+  period: string;
+  totalOrders: number;        // ✅ En tu backend es long, pero en TS es number
+  totalRevenue: number;       // ✅ BigDecimal se convierte a number
+  averageOrderValue: number;
+  periodStart: string;        // ✅ LocalDateTime se convierte a string ISO
+  periodEnd: string;
+}
+
+export interface UserPurchaseStatisticsDTO {
+  userId: number;             // ✅ Long se convierte a number
+  userName: string;
+  userEmail: string;
+  totalOrders: number;        // ✅ long se convierte a number
+  totalSpent: number;         // ✅ BigDecimal se convierte a number
+  averageOrderValue: number;
+  mostPurchasedProduct?: string; // ✅ Opcional según tu backend
+}
+
+// ✅ AGREGAR: Interface faltante para NotificationDTO
+export interface NotificationDTO {
+  id: number;
+  userId: number;
+  type: string;
+  title: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+  relatedEntityId?: number;
+  relatedEntityType?: string;
+}
+
+// ✅ AGREGAR: Interface para el summary que devuelve tu backend
+export interface ReportsSummary {
+  productSales: ProductSalesDTO[];
+  userStatistics: UserPurchaseStatisticsDTO[];
+  salesReport: SalesReportDTO;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class AdminService {
-  private apiUrl = environment.apiUrl;
+  private apiUrl = 'http://localhost:8080/api';
 
   constructor(
     private http: HttpClient,
@@ -61,10 +112,100 @@ export class AdminService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  // ✅ ENDPOINT EXACTO: GET /api/admin/reports/product-sales
-  getProductSalesStatistics(): Observable<ProductSalesDTO[]> {
-    return this.http.get<ProductSalesDTO[]>(`${this.apiUrl}/admin/reports/product-sales`)
-      .pipe(catchError(this.handleError.bind(this)));
+  // Método para obtener estadísticas de productos
+  getProductSalesStatistics(filter?: ProductSalesFilter): Observable<ProductSalesDTO[]> {
+    let params = new HttpParams();
+    
+    // Simplificar - no usar filtros complejos por ahora
+    return this.http.get<ProductSalesDTO[]>(`${this.apiUrl}/admin/reports/product-sales`, {
+      params,
+      withCredentials: true
+    }).pipe(catchError(this.handleError.bind(this)));
+  }
+
+  // ✅ CORREGIR: Endpoints de reportes según tu backend
+  getSalesReportForPeriod(days?: number, startDate?: Date, endDate?: Date): Observable<SalesReportDTO> {
+    let params = new HttpParams();
+    
+    if (startDate && endDate) {
+      params = params.set('startDate', startDate.toISOString());
+      params = params.set('endDate', endDate.toISOString());
+    } else if (days) {
+      params = params.set('days', days.toString());
+    } else {
+      params = params.set('days', '30');
+    }
+    
+    return this.http.get<SalesReportDTO>(`${this.apiUrl}/admin/reports/sales/period`, {
+      params,
+      withCredentials: true
+    }).pipe(catchError(this.handleError.bind(this)));
+  }
+
+  getUserPurchaseStatistics(startDate?: Date, endDate?: Date): Observable<UserPurchaseStatisticsDTO[]> {
+    let params = new HttpParams();
+    
+    if (startDate && endDate) {
+      params = params.set('startDate', startDate.toISOString());
+      params = params.set('endDate', endDate.toISOString());
+    }
+    
+    return this.http.get<UserPurchaseStatisticsDTO[]>(`${this.apiUrl}/admin/reports/users/statistics`, {
+      params,
+      withCredentials: true
+    }).pipe(catchError(this.handleError.bind(this)));
+  }
+
+  // ✅ CORREGIR: Summary según tu backend
+  getReportsSummary(): Observable<ReportsSummary> {
+    return this.http.get<ReportsSummary>(`${this.apiUrl}/admin/reports/summary`, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError.bind(this)));
+  }
+
+  // ⚠️ NEW: Notifications
+  getNotifications(): Observable<NotificationDTO[]> {
+    return this.http.get<NotificationDTO[]>(`${this.apiUrl}/notifications`, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError.bind(this)));
+  }
+
+  getUnreadNotifications(): Observable<NotificationDTO[]> {
+    return this.http.get<NotificationDTO[]>(`${this.apiUrl}/notifications/unread`, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError.bind(this)));
+  }
+
+  getUnreadNotificationsCount(): Observable<{ count: number }> {
+    return this.http.get<{ count: number }>(`${this.apiUrl}/notifications/unread/count`, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError.bind(this)));
+  }
+
+  markNotificationAsRead(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/notifications/${id}/read`, {}, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError.bind(this)));
+  }
+
+  markAllNotificationsAsRead(): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/notifications/read-all`, {}, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError.bind(this)));
+  }
+
+  // ⚠️ NEW: Payment History and Receipts
+  getMyPayments(): Observable<AdminPaymentDTO[]> {
+    return this.http.get<AdminPaymentDTO[]>(`${this.apiUrl}/payments/my-payments`, {
+      withCredentials: true
+    }).pipe(catchError(this.handleError.bind(this)));
+  }
+
+  getReceipt(orderId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/receipts/${orderId}`, {
+      responseType: 'blob',
+      withCredentials: true
+    }).pipe(catchError(this.handleError.bind(this)));
   }
 
   // ✅ MÉTODOS QUE DEBEN USAR OTROS SERVICIOS

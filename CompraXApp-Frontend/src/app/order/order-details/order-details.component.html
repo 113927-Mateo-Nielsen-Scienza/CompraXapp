@@ -15,28 +15,25 @@
   <!-- Order Details Content -->
   <div *ngIf="!loading && !error && order" class="order-content">
     
-    <!-- ✅ FIX: Order Header SEPARADO - Arriba solo -->
+    <!-- ✅ CORREGIR: Order Header - Solo usar createdAt -->
     <div class="order-header">
       <h1>Order #{{ order.id }}</h1>
-      <!-- ✅ FIX: Remove unnecessary optional chaining -->
       <div class="order-date">{{ order.createdAt | date:'medium' }}</div>
       <div class="order-status" [ngClass]="order.status.toLowerCase()">
         {{ getStatusText(order.status) }}
       </div>
     </div>
 
-    <!-- ✅ FIX: Grid SOLO para items y summary -->
+    <!-- ✅ CORREGIR: Grid para items y summary -->
     <div class="content-grid">
       <!-- Order Items -->
       <div class="order-items">
         <div class="order-items-header">
-          <!-- ✅ FIX: Remove unnecessary optional chaining -->
           <h2>Order Items ({{ order.items.length }})</h2>
         </div>
         
         <div class="order-items-list">
-          <!-- ✅ FIX: Remove unnecessary optional chaining -->
-          <div *ngIf="order.items.length > 0">
+          <div *ngIf="order.items && order.items.length > 0">
             <div *ngFor="let item of order.items; trackBy: trackByItemId" class="order-item">
               <img 
                 [src]="getProductImageUrl(item)"
@@ -57,8 +54,7 @@
             </div>
           </div>
 
-          <!-- ✅ FIX: Remove unnecessary optional chaining -->
-          <div *ngIf="order.items.length === 0" class="no-items">
+          <div *ngIf="!order.items || order.items.length === 0" class="no-items">
             <p>No items found for this order.</p>
           </div>
         </div>
@@ -99,6 +95,7 @@
           
           <div class="info-row">
             <span class="info-label">Order Date:</span>
+            <!-- ✅ CORREGIR: Solo usar createdAt, no orderDate -->
             <span class="info-value">{{ order.createdAt | date:'medium' }}</span>
           </div>
           
@@ -120,9 +117,15 @@
             Back to Orders
           </button>
           
+          <!-- ✅ AGREGAR: Botón para ver comprobante -->
+          <button class="action-btn info" (click)="viewReceipt()" *ngIf="canDownloadInvoice()">
+            <i class="fas fa-eye"></i>
+            Ver Comprobante
+          </button>
+          
           <button class="action-btn primary" (click)="downloadInvoice()" *ngIf="canDownloadInvoice()">
             <i class="fas fa-download"></i>
-            Download Invoice
+            Download PDF
           </button>
           
           <button class="action-btn danger" (click)="cancelOrder()" *ngIf="canCancelOrder()">

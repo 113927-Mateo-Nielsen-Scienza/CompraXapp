@@ -15,17 +15,15 @@ public class UserPurchaseStatisticsDTO {
     private long totalOrders;
     private BigDecimal totalSpent;
     private BigDecimal averageOrderValue;
-    private String mostPurchasedProduct;
-
-    public UserPurchaseStatisticsDTO(Long userId, String userName, String userEmail,
-                                   long totalOrders, BigDecimal totalSpent) {
+    private String mostPurchasedProduct;    public UserPurchaseStatisticsDTO(Long userId, String userName, String userEmail,
+                                   Long totalOrders, BigDecimal totalSpent) {
         this.userId = userId;
         this.userName = userName;
         this.userEmail = userEmail;
-        this.totalOrders = totalOrders;
+        this.totalOrders = totalOrders != null ? totalOrders : 0L;
         this.totalSpent = totalSpent != null ? totalSpent : BigDecimal.ZERO;
-        this.averageOrderValue = totalOrders > 0 ?
-            this.totalSpent.divide(BigDecimal.valueOf(totalOrders), 2, RoundingMode.HALF_UP) :
+        this.averageOrderValue = this.totalOrders > 0 ?
+            this.totalSpent.divide(BigDecimal.valueOf(this.totalOrders), 2, RoundingMode.HALF_UP) :
             BigDecimal.ZERO;
     }
 }

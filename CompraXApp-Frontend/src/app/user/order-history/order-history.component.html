@@ -4,6 +4,14 @@
     <p>Review all your previous purchases</p>
   </div>
 
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="alert alert-error">
+    {{ errorMessage }}
+  </div>
+
   <!-- Loading State -->
   <div *ngIf="loading" class="loading-state">
     <div class="spinner"></div>
@@ -43,7 +51,6 @@
 
       <div class="order-details">
         <div class="order-items">
-          <!-- ✅ FIX: Remove unnecessary optional chaining -->
           <h4>Products ({{ order.items.length }})</h4>
           <div class="items-list">
             <div *ngFor="let item of order.items; trackBy: trackByItemId" class="item">
@@ -78,8 +85,20 @@
       </div>
 
       <div class="order-actions">
-        <button class="btn btn-outline" (click)="viewOrderDetails(order.id)">View Details</button>
-        <button class="btn btn-secondary" (click)="reorderItems(order)">Reorder</button>
+        <button class="btn btn-outline" (click)="viewOrderDetails(order.id)">
+          👁️ View Details
+        </button>
+        
+       
+      
+        
+        <button 
+          class="btn btn-success" 
+          (click)="downloadReceipt(order.id)"
+          [disabled]="order.status === 'CANCELLED'"
+          title="Descargar comprobante">
+          📥 Descargar PDF
+        </button>
       </div>
     </div>
   </div>
