@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup } from '@angular/forms';
 import { 
@@ -8,6 +8,7 @@ import {
   UserPurchaseStatisticsDTO,
   ReportsSummary
 } from '../admin.service';
+import Chart from 'chart.js/auto';
 
 @Component({
   selector: 'app-admin-reports',
@@ -19,8 +20,8 @@ import {
   templateUrl: './admin-reports.component.html',
   styleUrls: ['./admin-reports.component.css']
 })
-export class AdminReportsComponent implements OnInit {
-  // ⚠️ SIMPLIFICAR: Solo mantener lo que funciona
+export class AdminReportsComponent implements OnInit, AfterViewInit, OnDestroy {
+  // Tab navigation
   activeTab: 'products' | 'sales' | 'users' | 'summary' = 'summary';
   
   // Report data
@@ -30,6 +31,22 @@ export class AdminReportsComponent implements OnInit {
   reportsSummary: any = null;
   
   loading = false;
+  
+  // Chart references
+  @ViewChild('productRevenueChart') productRevenueChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('productQuantityChart') productQuantityChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('userSpendingChart') userSpendingChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('userOrdersChart') userOrdersChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('salesOverviewChart') salesOverviewChartRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('summaryPieChart') summaryPieChartRef!: ElementRef<HTMLCanvasElement>;
+  
+  // Chart instances
+  private productRevenueChart: Chart | null = null;
+  private productQuantityChart: Chart | null = null;
+  private userSpendingChart: Chart | null = null;
+  private userOrdersChart: Chart | null = null;
+  private salesOverviewChart: Chart | null = null;
+  private summaryPieChart: Chart | null = null;
   
   // Solo formulario de sales report
   salesReportForm!: FormGroup;
@@ -55,7 +72,43 @@ export class AdminReportsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadReportsSummary();
-    this.loadProductSalesStats(); // ✅ Sin filtros por ahora
+    this.loadProductSalesStats();
+  }
+
+  ngAfterViewInit(): void {
+    // Charts will be initialized when data is loaded
+  }
+
+  ngOnDestroy(): void {
+    // Destroy all charts to prevent memory leaks
+    this.destroyAllCharts();
+  }
+
+  private destroyAllCharts(): void {
+    if (this.productRevenueChart) {
+      this.productRevenueChart.destroy();
+      this.productRevenueChart = null;
+    }
+    if (this.productQuantityChart) {
+      this.productQuantityChart.destroy();
+      this.productQuantityChart = null;
+    }
+    if (this.userSpendingChart) {
+      this.userSpendingChart.destroy();
+      this.userSpendingChart = null;
+    }
+    if (this.userOrdersChart) {
+      this.userOrdersChart.destroy();
+      this.userOrdersChart = null;
+    }
+    if (this.salesOverviewChart) {
+      this.salesOverviewChart.destroy();
+      this.salesOverviewChart = null;
+    }
+    if (this.summaryPieChart) {
+      this.summaryPieChart.destroy();
+      this.summaryPieChart = null;
+    }
   }
 
   // ❌ REMOVER: initializeForm() y loadCategories()
@@ -84,6 +137,9 @@ export class AdminReportsComponent implements OnInit {
         this.productSalesStats = stats;
         this.loading = false;
         this.showSuccess(`Loaded ${stats.length} product statistics`);
+        
+        // Initialize charts after data is loaded
+        setTimeout(() => this.initializeProductCharts(), 100);
       },
       error: (error) => {
         console.error('Error loading product sales stats:', error);
@@ -100,6 +156,9 @@ export class AdminReportsComponent implements OnInit {
         this.reportsSummary = summary;
         this.loading = false;
         this.showSuccess('Summary loaded successfully');
+        
+        // Initialize summary charts
+        setTimeout(() => this.initializeSummaryCharts(), 100);
       },
       error: (error) => {
         console.error('Error loading reports summary:', error);
@@ -129,6 +188,9 @@ export class AdminReportsComponent implements OnInit {
         this.salesReport = report;
         this.loading = false;
         this.showSuccess('Sales report loaded successfully');
+        
+        // Initialize sales chart
+        setTimeout(() => this.initializeSalesChart(), 100);
       },
       error: (error) => {
         console.error('Error loading sales report:', error);
@@ -145,6 +207,9 @@ export class AdminReportsComponent implements OnInit {
         this.userStatistics = stats;
         this.loading = false;
         this.showSuccess(`Loaded ${stats.length} user statistics`);
+        
+        // Initialize user charts
+        setTimeout(() => this.initializeUserCharts(), 100);
       },
       error: (error) => {
         console.error('Error loading user statistics:', error);
@@ -162,6 +227,9 @@ export class AdminReportsComponent implements OnInit {
       case 'products':
         if (this.productSalesStats.length === 0) {
           this.loadProductSalesStats();
+        } else {
+          // Re-initialize charts if data already exists
+          setTimeout(() => this.initializeProductCharts(), 150);
         }
         break;
       case 'sales':
@@ -170,11 +238,17 @@ export class AdminReportsComponent implements OnInit {
       case 'users':
         if (this.userStatistics.length === 0) {
           this.loadUserStatistics();
+        } else {
+          // Re-initialize charts if data already exists
+          setTimeout(() => this.initializeUserCharts(), 150);
         }
         break;
       case 'summary':
         if (!this.reportsSummary) {
           this.loadReportsSummary();
+        } else {
+          // Re-initialize charts if data already exists
+          setTimeout(() => this.initializeSummaryCharts(), 150);
         }
         break;
     }
@@ -218,5 +292,345 @@ export class AdminReportsComponent implements OnInit {
   private clearMessages(): void {
     this.successMessage = '';
     this.errorMessage = '';
+  }
+
+  // ===== CHART INITIALIZATION METHODS =====
+
+  private initializeProductCharts(): void {
+    if (!this.productSalesStats || this.productSalesStats.length === 0) return;
+
+    const topProducts = this.productSalesStats.slice(0, 10);
+    const labels = topProducts.map(p => this.truncateLabel(p.productName, 15));
+    const revenueData = topProducts.map(p => p.totalRevenue);
+    const quantityData = topProducts.map(p => p.totalQuantitySold);
+
+    // Revenue Bar Chart
+    if (this.productRevenueChartRef?.nativeElement) {
+      if (this.productRevenueChart) this.productRevenueChart.destroy();
+      
+      this.productRevenueChart = new Chart(this.productRevenueChartRef.nativeElement, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Revenue ($)',
+            data: revenueData,
+            backgroundColor: this.generateGradientColors(topProducts.length, 'blue'),
+            borderColor: 'rgba(59, 130, 246, 1)',
+            borderWidth: 1,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            title: {
+              display: true,
+              text: 'Top 10 Products by Revenue',
+              font: { size: 16, weight: 'bold' },
+              color: '#1f2937'
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: (value) => '$' + value.toLocaleString()
+              }
+            },
+            x: {
+              ticks: {
+                maxRotation: 45,
+                minRotation: 45
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Quantity Doughnut Chart
+    if (this.productQuantityChartRef?.nativeElement) {
+      if (this.productQuantityChart) this.productQuantityChart.destroy();
+      
+      this.productQuantityChart = new Chart(this.productQuantityChartRef.nativeElement, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: quantityData,
+            backgroundColor: this.generateGradientColors(topProducts.length, 'rainbow'),
+            borderColor: '#ffffff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: { font: { size: 11 } }
+            },
+            title: {
+              display: true,
+              text: 'Products by Quantity Sold',
+              font: { size: 16, weight: 'bold' },
+              color: '#1f2937'
+            }
+          }
+        }
+      });
+    }
+  }
+
+  private initializeUserCharts(): void {
+    if (!this.userStatistics || this.userStatistics.length === 0) return;
+
+    const topUsers = this.userStatistics.slice(0, 10);
+    const labels = topUsers.map(u => this.truncateLabel(u.userName, 12));
+    const spendingData = topUsers.map(u => u.totalSpent);
+    const ordersData = topUsers.map(u => u.totalOrders);
+
+    // User Spending Chart
+    if (this.userSpendingChartRef?.nativeElement) {
+      if (this.userSpendingChart) this.userSpendingChart.destroy();
+      
+      this.userSpendingChart = new Chart(this.userSpendingChartRef.nativeElement, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Total Spent ($)',
+            data: spendingData,
+            backgroundColor: this.generateGradientColors(topUsers.length, 'green'),
+            borderColor: 'rgba(16, 185, 129, 1)',
+            borderWidth: 1,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: 'y',
+          plugins: {
+            legend: { display: false },
+            title: {
+              display: true,
+              text: 'Top 10 Customers by Spending',
+              font: { size: 16, weight: 'bold' },
+              color: '#1f2937'
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: {
+                callback: (value) => '$' + value.toLocaleString()
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // User Orders Chart - Changed to horizontal bar for better visualization
+    if (this.userOrdersChartRef?.nativeElement) {
+      if (this.userOrdersChart) this.userOrdersChart.destroy();
+      
+      this.userOrdersChart = new Chart(this.userOrdersChartRef.nativeElement, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Total Orders',
+            data: ordersData,
+            backgroundColor: this.generateGradientColors(topUsers.length, 'purple'),
+            borderColor: 'rgba(139, 92, 246, 1)',
+            borderWidth: 1,
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: 'y',
+          plugins: {
+            legend: { display: false },
+            title: {
+              display: true,
+              text: 'Customer Orders Distribution',
+              font: { size: 16, weight: 'bold' },
+              color: '#1f2937'
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: {
+                callback: (value) => Number(value).toLocaleString()
+              }
+            }
+          }
+        }
+      });
+    }
+  }
+
+  private initializeSalesChart(): void {
+    if (!this.salesReport) return;
+
+    if (this.salesOverviewChartRef?.nativeElement) {
+      if (this.salesOverviewChart) this.salesOverviewChart.destroy();
+      
+      // Create a doughnut chart showing revenue distribution goal (visual gauge)
+      const totalRevenue = this.salesReport.totalRevenue;
+      const targetRevenue = Math.max(totalRevenue * 1.5, 10000); // Target is 150% of current or min $10k
+      const remaining = Math.max(targetRevenue - totalRevenue, 0);
+      
+      this.salesOverviewChart = new Chart(this.salesOverviewChartRef.nativeElement, {
+        type: 'doughnut',
+        data: {
+          labels: ['Revenue Achieved', 'Target Remaining'],
+          datasets: [{
+            data: [totalRevenue, remaining],
+            backgroundColor: [
+              'rgba(16, 185, 129, 0.9)',
+              'rgba(229, 231, 235, 0.5)'
+            ],
+            borderColor: [
+              'rgba(16, 185, 129, 1)',
+              'rgba(209, 213, 219, 1)'
+            ],
+            borderWidth: 2,
+            circumference: 270,
+            rotation: 225
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '75%',
+          plugins: {
+            legend: { display: false },
+            title: {
+              display: true,
+              text: `Revenue Progress - ${this.salesReport.period}`,
+              font: { size: 16, weight: 'bold' },
+              color: '#1f2937'
+            },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const value = context.raw as number;
+                  return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  }
+
+  private initializeSummaryCharts(): void {
+    if (!this.reportsSummary) return;
+
+    // Summary Pie Chart for Top Products
+    if (this.summaryPieChartRef?.nativeElement && this.reportsSummary.productSales?.length > 0) {
+      if (this.summaryPieChart) this.summaryPieChart.destroy();
+      
+      const topProducts = this.reportsSummary.productSales.slice(0, 5);
+      const labels = topProducts.map((p: any) => this.truncateLabel(p.productName, 12));
+      const data = topProducts.map((p: any) => p.totalRevenue);
+
+      this.summaryPieChart = new Chart(this.summaryPieChartRef.nativeElement, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: [
+              'rgba(59, 130, 246, 0.8)',
+              'rgba(16, 185, 129, 0.8)',
+              'rgba(249, 115, 22, 0.8)',
+              'rgba(139, 92, 246, 0.8)',
+              'rgba(236, 72, 153, 0.8)'
+            ],
+            borderColor: '#ffffff',
+            borderWidth: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { font: { size: 12 } }
+            },
+            title: {
+              display: true,
+              text: 'Top 5 Products Revenue Distribution',
+              font: { size: 16, weight: 'bold' },
+              color: '#1f2937'
+            }
+          }
+        }
+      });
+    }
+  }
+
+  // Helper methods for charts
+  private truncateLabel(label: string, maxLength: number): string {
+    if (!label) return '';
+    return label.length > maxLength ? label.substring(0, maxLength) + '...' : label;
+  }
+
+  private generateGradientColors(count: number, theme: string): string[] {
+    const colors: string[] = [];
+    
+    switch (theme) {
+      case 'blue':
+        for (let i = 0; i < count; i++) {
+          const opacity = 0.9 - (i * 0.05);
+          colors.push(`rgba(59, 130, 246, ${Math.max(opacity, 0.4)})`);
+        }
+        break;
+      case 'green':
+        for (let i = 0; i < count; i++) {
+          const opacity = 0.9 - (i * 0.05);
+          colors.push(`rgba(16, 185, 129, ${Math.max(opacity, 0.4)})`);
+        }
+        break;
+      case 'purple':
+        for (let i = 0; i < count; i++) {
+          const opacity = 0.9 - (i * 0.05);
+          colors.push(`rgba(139, 92, 246, ${Math.max(opacity, 0.4)})`);
+        }
+        break;
+      case 'rainbow':
+      default:
+        const rainbowColors = [
+          'rgba(59, 130, 246, 0.8)',
+          'rgba(16, 185, 129, 0.8)',
+          'rgba(249, 115, 22, 0.8)',
+          'rgba(139, 92, 246, 0.8)',
+          'rgba(236, 72, 153, 0.8)',
+          'rgba(245, 158, 11, 0.8)',
+          'rgba(6, 182, 212, 0.8)',
+          'rgba(239, 68, 68, 0.8)',
+          'rgba(34, 197, 94, 0.8)',
+          'rgba(168, 85, 247, 0.8)'
+        ];
+        for (let i = 0; i < count; i++) {
+          colors.push(rainbowColors[i % rainbowColors.length]);
+        }
+        break;
+    }
+    
+    return colors;
   }
 }

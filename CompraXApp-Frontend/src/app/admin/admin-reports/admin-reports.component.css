@@ -1157,3 +1157,180 @@
   margin: 0;
   font-size: 1rem;
 }
+
+/* ===== CHART STYLES ===== */
+.chart-section {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+.chart-section h3 {
+  color: #2c3e50;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.charts-section {
+  margin-bottom: 2rem;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.chart-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.chart-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.chart-card h3 {
+  color: #2c3e50;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  text-align: center;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f1f3f5;
+}
+
+.chart-container {
+  position: relative;
+  width: 100%;
+  background: white;
+  border-radius: 8px;
+}
+
+.chart-container.chart-small {
+  height: 200px;
+}
+
+.chart-container.chart-medium {
+  height: 300px;
+}
+
+.chart-container.chart-large {
+  height: 400px;
+  padding: 1rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.chart-container canvas {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* ===== GAUGE CHART STYLES ===== */
+.gauge-chart {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.gauge-center-text {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  top: 55%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.gauge-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #10b981;
+  line-height: 1;
+}
+
+.gauge-label {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+/* ===== HIGHLIGHTED CARDS ===== */
+.summary-card.highlight-blue {
+  border-left: 4px solid #3b82f6;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, white 100%);
+}
+
+.summary-card.highlight-green {
+  border-left: 4px solid #10b981;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, white 100%);
+}
+
+.summary-card.highlight-orange {
+  border-left: 4px solid #f97316;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.05) 0%, white 100%);
+}
+
+.summary-card .card-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ===== RESPONSIVE CHARTS ===== */
+@media (max-width: 900px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .chart-container.chart-medium {
+    height: 280px;
+  }
+  
+  .chart-container.chart-large {
+    height: 350px;
+  }
+  
+  .gauge-value {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .chart-card {
+    padding: 1rem;
+  }
+  
+  .chart-container.chart-medium {
+    height: 250px;
+  }
+  
+  .chart-container.chart-large {
+    height: 300px;
+  }
+  
+  .charts-grid {
+    gap: 1rem;
+  }
+  
+  .gauge-value {
+    font-size: 1.3rem;
+  }
+  
+  .gauge-label {
+    font-size: 0.8rem;
+  }
+}

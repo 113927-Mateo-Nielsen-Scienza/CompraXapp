@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional; // CAMBIAR: de javax a Spring
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -50,12 +50,12 @@ public class UserService {
     private String resetPasswordPath;
 
     public User registerUser(SignupRequest signUpRequest) throws EmailAlreadyExistsException {
-        // Verificar si el email ya existe
+        
         if (userRepository.findByEmail(signUpRequest.getEmail()).isPresent()) {
             throw new EmailAlreadyExistsException("El email " + signUpRequest.getEmail() + " ya está registrado.");
         }
 
-        // Crear nuevo usuario
+       
         User user = new User();
         user.setName(signUpRequest.getName());
         user.setEmail(signUpRequest.getEmail());
