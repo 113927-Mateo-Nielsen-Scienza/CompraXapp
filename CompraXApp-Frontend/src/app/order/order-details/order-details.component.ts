@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { OrderService } from '../order.service';
 import { AuthService } from '../../auth/auth.service';
 import { ProductService } from '../../product/product.service';
+import { ToastService } from '../../services/toast.service';
 
 interface OrderItem {
   id: number;
@@ -43,17 +44,16 @@ export class OrderDetailsComponent implements OnInit {
     private router: Router,
     private orderService: OrderService,
     private authService: AuthService,
-    private productService: ProductService
+    private productService: ProductService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
-    // Verificar autenticación
     if (!this.authService.isLoggedIn()) {
       this.router.navigate(['/auth/login']);
       return;
     }
 
-    // Obtener ID del order de la ruta
     this.route.params.subscribe(params => {
       this.orderId = +params['id'];
       if (this.orderId) {
@@ -95,7 +95,6 @@ export class OrderDetailsComponent implements OnInit {
 
     console.log('🔍 Loading product images for items:', this.order.items);
 
-    // Para cada item, intentar cargar la imagen del producto
     const imagePromises = this.order.items.map(item => {
       return new Promise<void>((resolve) => {
         if (item.productId) {
@@ -110,7 +109,7 @@ export class OrderDetailsComponent implements OnInit {
             },
             error: (err) => {
               console.warn(`⚠️ Failed to load product ${item.productId}:`, err);
-              resolve(); // Continuar aunque falle
+              resolve();
             }
           });
         } else {
@@ -119,7 +118,6 @@ export class OrderDetailsComponent implements OnInit {
       });
     });
 
-    // Esperar a que todas las imágenes se carguen (o fallen)
     Promise.all(imagePromises).then(() => {
       console.log('🔍 Final order with loaded images:', this.order);
       this.loading = false;
@@ -142,6 +140,18 @@ export class OrderDetailsComponent implements OnInit {
 
     console.log('🔍 Final adapted order:', order);
     return order;
+  }
+
+  getFormattedShippingAddress(): string {
+    if (!this.order?.shippingAddress) return 'No address provided';
+    
+    const address = this.order.shippingAddress;
+    
+    if (address.includes('||ADDR||')) {
+      return address.split('||ADDR||')[0].trim();
+    }
+    
+    return address;
   }
 
   private adaptOrderItems(backendItems: any[]): OrderItem[] {
@@ -175,7 +185,6 @@ export class OrderDetailsComponent implements OnInit {
   private parsePrice(value: any): number {
     if (typeof value === 'number') return value;
     if (typeof value === 'string') {
-      // Remover símbolos de moneda y espacios
       const cleanValue = value.replace(/[$,\s]/g, '');
       const parsed = parseFloat(cleanValue);
       return isNaN(parsed) ? 0 : parsed;
@@ -228,12 +237,10 @@ export class OrderDetailsComponent implements OnInit {
     return total;
   }
 
-  // Verificar si se puede descargar factura
   canDownloadInvoice(): boolean {
     return this.order?.status !== 'CANCELLED' && this.order?.status !== 'PENDING';
   }
 
-  // Verificar si se puede cancelar el pedido
   canCancelOrder(): boolean {
     return this.order?.status === 'PENDING';
   }
@@ -252,12 +259,12 @@ export class OrderDetailsComponent implements OnInit {
             this.order.status = 'CANCELLED';
           }
           this.loading = false;
-          alert('Pedido cancelado exitosamente');
+          this.toastService.success('Pedido cancelado exitosamente');
         },
         error: (error) => {
           this.loading = false;
           console.error('Error cancelling order:', error);
-          alert(error.message || 'Error al cancelar el pedido. Inténtalo de nuevo.');
+          this.toastService.error(error.message || 'Error al cancelar el pedido. Inténtalo de nuevo.');
         }
       });
     }
@@ -269,7 +276,7 @@ export class OrderDetailsComponent implements OnInit {
         console.log('Invoice downloaded successfully');
       }).catch(error => {
         console.error('Error downloading invoice:', error);
-        alert('Error downloading invoice. Please try again.');
+        this.toastService.error('Error downloading invoice. Please try again.');
       });
     }
   }
@@ -278,7 +285,6 @@ export class OrderDetailsComponent implements OnInit {
     if (this.order) {
       this.orderService.getReceipt(this.order.id).subscribe({
         next: (response) => {
-          // Mostrar en modal o nueva ventana
           const newWindow = window.open('', '_blank');
           if (newWindow) {
             newWindow.document.write(`
@@ -295,13 +301,12 @@ export class OrderDetailsComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error loading receipt:', error);
-          alert('Error loading receipt. Please try again.');
+          this.toastService.error('Error loading receipt. Please try again.');
         }
       });
     }
   }
 
-  // Volver a orders
   goBack(): void {
     this.router.navigate(['/user/orders']);
   }
@@ -329,7 +334,6 @@ export class OrderDetailsComponent implements OnInit {
     return methodTexts[method?.toUpperCase()] || method || 'Unknown';
   }
 
-  // TrackBy function
   trackByItemId(index: number, item: OrderItem): number {
     return item.id || item.productId || index;
   }

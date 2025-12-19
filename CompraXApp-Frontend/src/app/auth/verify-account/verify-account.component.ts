@@ -19,8 +19,7 @@ export class VerifyAccountComponent implements OnInit, OnDestroy {
   successMessage = '';
   userEmail = '';
   
-  // Timer para mostrar tiempo restante
-  timeRemaining = 15 * 60; // 15 minutos en segundos
+  timeRemaining = 15 * 60;
   timerInterval: any;
   
   constructor(
@@ -45,7 +44,6 @@ export class VerifyAccountComponent implements OnInit, OnDestroy {
       }
     });
     
-    // Iniciar timer
     this.startTimer();
   }
   
@@ -71,14 +69,10 @@ export class VerifyAccountComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.errorMessage = '';
     
-    // Aquí implementarías la llamada al servicio para reenviar el código
-    // this.authService.resendVerificationCode(this.userEmail).subscribe({...});
-    
-    // Por ahora, simular reenvío
     setTimeout(() => {
       this.isLoading = false;
       this.successMessage = 'Nuevo código enviado a tu correo electrónico.';
-      this.timeRemaining = 15 * 60; // Reiniciar timer
+      this.timeRemaining = 15 * 60;
       this.startTimer();
     }, 2000);
   }

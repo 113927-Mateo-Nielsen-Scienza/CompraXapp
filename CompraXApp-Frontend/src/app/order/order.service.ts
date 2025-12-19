@@ -99,20 +99,16 @@ export class OrderService {
 
   async generateReceiptPDF(orderId: number): Promise<void> {
     try {
-      // Obtener datos del comprobante
       const response = await this.getReceipt(orderId).toPromise();
       if (!response) return;
 
-      // Obtener detalles de la orden
       const orderDetails = await this.getOrderById(orderId).toPromise();
       if (!orderDetails) return;
 
-      // Crear PDF
       const pdf = new jsPDF();
       
       this.designProfessionalReceipt(pdf, orderDetails, response.receipt);
       
-      // Descargar PDF
       pdf.save(`comprobante-${orderId}.pdf`);
       
     } catch (error) {
@@ -144,7 +140,6 @@ export class OrderService {
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
     
-    // Información básica
     pdf.text(`Pedido #: ${order.id}`, 20, currentY);
     pdf.text(`Fecha: ${new Date(order.orderDate).toLocaleDateString('es-ES')}`, 20, currentY + 10);
     pdf.text(`Estado: ${this.getStatusText(order.status)}`, 20, currentY + 20);
@@ -160,7 +155,6 @@ export class OrderService {
       currentY += 40;
     }
     
-    // Dirección de envío
     if (order.shippingAddress) {
       pdf.text(`Dirección: ${order.shippingAddress}`, 20, currentY);
       currentY += 20;
@@ -175,7 +169,6 @@ export class OrderService {
     pdf.text('PRODUCTOS:', 20, currentY);
     currentY += 15;
 
-    // Cabecera de tabla
     pdf.setFillColor(245, 245, 245);
     pdf.rect(20, currentY - 5, pageWidth - 40, 15, 'F');
     
@@ -198,7 +191,6 @@ export class OrderService {
         const subtotal = quantity * price;
         totalAmount += subtotal;
 
-        // Nombre del producto (truncar si es muy largo)
         const productName = item.productName.length > 25 
           ? item.productName.substring(0, 25) + '...' 
           : item.productName;
@@ -236,12 +228,10 @@ export class OrderService {
     pdf.text('¡Gracias por tu compra!', pageWidth / 2, currentY + 15, { align: 'center' });
     pdf.text('CompraXApp - Tu tienda online de confianza', pageWidth / 2, currentY + 25, { align: 'center' });
     
-    // Fecha de generación
     pdf.setFontSize(8);
     pdf.text(`Generado el: ${new Date().toLocaleString('es-ES')}`, pageWidth / 2, currentY + 35, { align: 'center' });
   }
 
-  // Helper methods (si no los tienes)
   private getStatusText(status: string): string {
     const statusTexts: { [key: string]: string } = {
       'PENDING': 'Pendiente',

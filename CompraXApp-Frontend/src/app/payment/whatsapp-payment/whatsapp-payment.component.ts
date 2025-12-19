@@ -17,7 +17,7 @@ export class WhatsappPaymentComponent implements OnInit {
   loading = false;
   error = '';
   orderData: any = {};
-  vendorPhone = '543513091448'; // Número configurado en el backend
+  vendorPhone = '543513091448';
 
   constructor(
     private paymentService: PaymentService,
@@ -59,15 +59,12 @@ export class WhatsappPaymentComponent implements OnInit {
       shippingAddress: parsedCheckoutData.shippingAddress || 'Coordinar por WhatsApp'
     };
 
-    // 1. Crear la orden
     this.orderService.createOrder(orderData).subscribe({
       next: (order) => {
         console.log('Order created:', order);
         
-        // 2. Generar link de WhatsApp usando el endpoint del backend
         this.orderService.requestWhatsAppPayment(order.id).subscribe({
           next: (response) => {
-            // 3. Limpiar carrito y abrir WhatsApp
             this.cartService.clearCart().subscribe({
               next: () => {
                 sessionStorage.removeItem('checkoutData');
@@ -77,7 +74,6 @@ export class WhatsappPaymentComponent implements OnInit {
                 });
               },
               error: () => {
-                // Incluso si falla limpiar el carrito, continuar
                 sessionStorage.removeItem('checkoutData');
                 window.open(response.whatsappLink, '_blank');
                 this.router.navigate(['/payment/success'], { 

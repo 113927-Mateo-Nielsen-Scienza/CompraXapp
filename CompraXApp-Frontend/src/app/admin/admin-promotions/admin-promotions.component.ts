@@ -20,7 +20,6 @@ export class AdminPromotionsComponent implements OnInit {
   
   promotionForm!: FormGroup;
   
-  // Messages
   successMessage = '';
   errorMessage = '';
 
@@ -105,7 +104,6 @@ export class AdminPromotionsComponent implements OnInit {
     this.selectedPromotion = promotion;
     this.isEditing = true;
     
-    // Populate form with selected promotion data
     this.promotionForm.patchValue({
       title: promotion.title,
       description: promotion.description,
@@ -234,7 +232,6 @@ export class AdminPromotionsComponent implements OnInit {
     this.errorMessage = '';
   }
 
-  // Utility methods
   isPromotionActive(promotion: PromotionDTO): boolean {
     const now = new Date();
     const startDate = new Date(promotion.startDate);

@@ -42,7 +42,7 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
     this.notificationService.getAllNotifications().subscribe({
       next: (notifications) => {
         this.notifications = notifications;
-        this.hasMore = false; // Backend no tiene paginación implementada
+        this.hasMore = false;
         this.loading = false;
       },
       error: (error) => {
@@ -62,7 +62,6 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
   }
 
   onNotificationClick(notification: Notification): void {
-    // Marcar como leída si no lo está
     if (!notification.read) {
       this.markAsRead(notification.id);
     }
@@ -77,12 +76,10 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
   markAsRead(notificationId: number): void {
     this.notificationService.markAsRead(notificationId).subscribe({
       next: () => {
-        // Actualizar la notificación localmente
         const notification = this.notifications.find(n => n.id === notificationId);
         if (notification) {
           notification.read = true;
         }
-        // Recargar todas las notificaciones para actualizar el contador
         this.notificationService.loadNotifications();
       },
       error: (error) => {
@@ -94,9 +91,7 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
   markAllAsRead(): void {
     this.notificationService.markAllAsRead().subscribe({
       next: () => {
-        // Marcar todas como leídas localmente
         this.notifications.forEach(n => n.read = true);
-        // Recargar para actualizar el contador
         this.notificationService.loadNotifications();
       },
       error: (error) => {
@@ -106,13 +101,11 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
   }
 
   deleteNotification(notificationId: number, event: Event): void {
-    event.stopPropagation(); // Evitar que se ejecute el click de la notificación
+    event.stopPropagation();
 
     this.notificationService.deleteNotification(notificationId).subscribe({
       next: () => {
-        // Remover la notificación localmente
         this.notifications = this.notifications.filter(n => n.id !== notificationId);
-        // Recargar para actualizar el contador
         this.notificationService.loadNotifications();
       },
       error: (error) => {

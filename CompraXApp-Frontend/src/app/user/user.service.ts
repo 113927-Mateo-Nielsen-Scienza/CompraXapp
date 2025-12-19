@@ -15,9 +15,9 @@ export interface User {
 }
 
 export interface UserUpdateRequest {
-  name: string;        // REQUERIDO
-  email: string;       // REQUERIDO  
-  shippingAddress?: string; // OPCIONAL
+  name: string;
+  email: string;
+  shippingAddress?: string;
 }
 
 export interface UserProfileResponse {

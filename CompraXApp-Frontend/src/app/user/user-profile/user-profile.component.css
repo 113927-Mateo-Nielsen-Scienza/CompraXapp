@@ -428,3 +428,161 @@
   0% { background-position: 200% 0%; }
   100% { background-position: -200% 0%; }
 }
+
+/* ===== ADDRESS SECTION ===== */
+.address-section {
+  margin-top: var(--spacing-6);
+  padding-top: var(--spacing-6);
+  border-top: 2px solid var(--gray-200);
+}
+
+.address-section h4 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--gray-800);
+  margin: 0 0 var(--spacing-5) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.address-section h4 i {
+  color: var(--primary-color);
+}
+
+.address-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-4);
+}
+
+.address-grid .street-field {
+  grid-column: span 2;
+}
+
+.address-grid .number-field {
+  grid-column: span 1;
+}
+
+.address-grid .floor-field {
+  grid-column: span 1;
+}
+
+.address-grid .apartment-field {
+  grid-column: span 1;
+}
+
+.address-grid .city-field {
+  grid-column: span 2;
+}
+
+.address-grid .province-field {
+  grid-column: span 1;
+}
+
+.address-grid .postal-field {
+  grid-column: span 1;
+}
+
+.address-grid .additional-field {
+  grid-column: span 4;
+}
+
+.address-grid .form-group {
+  margin-bottom: 0;
+}
+
+.address-grid label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--gray-700);
+  margin-bottom: var(--spacing-2);
+}
+
+.address-grid .form-control {
+  width: 100%;
+  padding: var(--spacing-3);
+  font-size: var(--font-size-base);
+  border: 2px solid var(--gray-300);
+  border-radius: var(--border-radius);
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.address-grid .form-control:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.address-grid .form-control:disabled {
+  background-color: var(--gray-100);
+  color: var(--gray-600);
+  cursor: not-allowed;
+}
+
+.address-grid .form-control.error {
+  border-color: var(--danger-color);
+}
+
+.address-grid .form-error {
+  font-size: var(--font-size-xs);
+  color: var(--danger-color);
+  margin-top: var(--spacing-1);
+}
+
+.address-grid select.form-control {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+/* Responsive address grid */
+@media (max-width: 768px) {
+  .address-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .address-grid .street-field {
+    grid-column: span 2;
+  }
+  
+  .address-grid .number-field,
+  .address-grid .floor-field,
+  .address-grid .apartment-field {
+    grid-column: span 1;
+  }
+  
+  .address-grid .city-field {
+    grid-column: span 2;
+  }
+  
+  .address-grid .province-field,
+  .address-grid .postal-field {
+    grid-column: span 1;
+  }
+  
+  .address-grid .additional-field {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 480px) {
+  .address-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .address-grid .street-field,
+  .address-grid .number-field,
+  .address-grid .floor-field,
+  .address-grid .apartment-field,
+  .address-grid .city-field,
+  .address-grid .province-field,
+  .address-grid .postal-field,
+  .address-grid .additional-field {
+    grid-column: span 1;
+  }
+}

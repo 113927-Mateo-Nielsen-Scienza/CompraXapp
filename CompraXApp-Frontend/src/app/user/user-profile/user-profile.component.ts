@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { Router } from '@angular/router';
 import { UserService, UserProfileResponse, UserUpdateRequest } from '../user.service';
 import { AuthService } from '../../auth/auth.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-user-profile',
@@ -21,18 +22,39 @@ export class UserProfileComponent implements OnInit {
   successMessage = '';
 
   profileForm: FormGroup;
+  addressForm: FormGroup;
   originalFormValues: any = {};
+  originalAddressValues: any = {};
+
+  provinces = [
+    'Buenos Aires', 'CABA', 'Catamarca', 'Chaco', 'Chubut', 'Córdoba',
+    'Corrientes', 'Entre Ríos', 'Formosa', 'Jujuy', 'La Pampa', 'La Rioja',
+    'Mendoza', 'Misiones', 'Neuquén', 'Río Negro', 'Salta', 'San Juan',
+    'San Luis', 'Santa Cruz', 'Santa Fe', 'Santiago del Estero',
+    'Tierra del Fuego', 'Tucumán'
+  ];
 
   constructor(
     private userService: UserService,
     private authService: AuthService,
     private router: Router,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private toastService: ToastService
   ) {
     this.profileForm = this.fb.group({
       name: [{value: '', disabled: true}, [Validators.required, Validators.minLength(2)]],
-      email: [{value: '', disabled: true}, [Validators.required, Validators.email]],
-      shippingAddress: [{value: '', disabled: true}]
+      email: [{value: '', disabled: true}, [Validators.required, Validators.email]]
+    });
+
+    this.addressForm = this.fb.group({
+      street: [{value: '', disabled: true}, [Validators.required]],
+      number: [{value: '', disabled: true}, [Validators.required]],
+      floor: [{value: '', disabled: true}],
+      apartment: [{value: '', disabled: true}],
+      city: [{value: '', disabled: true}, [Validators.required]],
+      province: [{value: '', disabled: true}, [Validators.required]],
+      postalCode: [{value: '', disabled: true}, [Validators.required]],
+      additionalInfo: [{value: '', disabled: true}]
     });
   }
 
@@ -50,14 +72,15 @@ export class UserProfileComponent implements OnInit {
         
         const formData = {
           name: profile.name,
-          email: profile.email,
-          shippingAddress: profile.shippingAddress || ''
+          email: profile.email
         };
         
         this.profileForm.patchValue(formData);
         this.originalFormValues = { ...formData };
-        // Enable form if it was loaded successfully and user might want to edit
-        // this.toggleEdit(false); // Or based on some other logic
+
+        const addressData = this.parseAddress(profile.shippingAddress || '');
+        this.addressForm.patchValue(addressData);
+        this.originalAddressValues = { ...addressData };
         this.isLoading = false;
       },
       error: (err: any) => {
@@ -69,8 +92,9 @@ export class UserProfileComponent implements OnInit {
   }
 
   saveProfile(): void {
-    if (this.profileForm.invalid) {
+    if (this.profileForm.invalid || this.addressForm.invalid) {
       this.markFormGroupTouched();
+      this.markAddressFormTouched();
       return;
     }
 
@@ -78,10 +102,12 @@ export class UserProfileComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
 
+    const combinedAddress = this.combineAddress();
+
     const updateData: UserUpdateRequest = {
       name: this.profileForm.value.name.trim(),
       email: this.profileForm.value.email.trim(),
-      shippingAddress: this.profileForm.value.shippingAddress?.trim() || ''
+      shippingAddress: combinedAddress
     };
 
     this.userService.updateMyProfile(updateData).subscribe({
@@ -93,10 +119,11 @@ export class UserProfileComponent implements OnInit {
         }
         
         this.originalFormValues = { ...this.profileForm.value };
+        this.originalAddressValues = { ...this.addressForm.value };
         
         this.successMessage = 'Profile updated successfully';
         this.isEditing = false;
-        this.toggleEditState(false); // Disable form after saving
+        this.toggleEditState(false);
         this.isSaving = false;
         
         setTimeout(() => {
@@ -121,14 +148,20 @@ export class UserProfileComponent implements OnInit {
     if (enable) {
       this.profileForm.get('name')?.enable();
       this.profileForm.get('email')?.enable();
-      this.profileForm.get('shippingAddress')?.enable();
+      Object.keys(this.addressForm.controls).forEach(key => {
+        this.addressForm.get(key)?.enable();
+      });
     } else {
       this.profileForm.get('name')?.disable();
       this.profileForm.get('email')?.disable();
-      this.profileForm.get('shippingAddress')?.disable();
-      if (!this.isEditing) { // If toggling off editing, restore original values
+      Object.keys(this.addressForm.controls).forEach(key => {
+        this.addressForm.get(key)?.disable();
+      });
+      if (!this.isEditing) {
           this.profileForm.patchValue(this.originalFormValues);
+          this.addressForm.patchValue(this.originalAddressValues);
           this.profileForm.markAsUntouched();
+          this.addressForm.markAsUntouched();
       }
     }
   }
@@ -138,7 +171,9 @@ export class UserProfileComponent implements OnInit {
     this.isEditing = false;
     this.toggleEditState(false);
     this.profileForm.patchValue(this.originalFormValues);
+    this.addressForm.patchValue(this.originalAddressValues);
     this.profileForm.markAsUntouched();
+    this.addressForm.markAsUntouched();
     this.clearMessages();
   }
 
@@ -205,7 +240,7 @@ export class UserProfileComponent implements OnInit {
       if (doubleConfirmed) {
         this.userService.deleteMyAccount().subscribe({
           next: () => {
-            alert('Your account has been successfully deleted.');
+            this.toastService.success('Your account has been successfully deleted.');
             this.authService.logout();
             this.router.navigate(['/']);
           },
@@ -216,5 +251,100 @@ export class UserProfileComponent implements OnInit {
         });
       }
     }
+  }
+
+  isAddressFieldInvalid(fieldName: string): boolean {
+    const field = this.addressForm.get(fieldName);
+    return !!(field && field.invalid && (field.dirty || field.touched));
+  }
+
+  private markAddressFormTouched(): void {
+    Object.keys(this.addressForm.controls).forEach(key => {
+      const control = this.addressForm.get(key);
+      control?.markAsTouched();
+    });
+  }
+
+  private parseAddress(address: string): any {
+    const defaultAddress = {
+      street: '',
+      number: '',
+      floor: '',
+      apartment: '',
+      city: '',
+      province: '',
+      postalCode: '',
+      additionalInfo: ''
+    };
+
+    if (!address || address.trim() === '') {
+      return defaultAddress;
+    }
+
+    if (address.includes('||ADDR||')) {
+      const parseablePart = address.split('||ADDR||')[1];
+      const parts = parseablePart.split('|').map(p => p.trim());
+      return {
+        street: parts[0] || '',
+        number: parts[1] || '',
+        floor: parts[2] || '',
+        apartment: parts[3] || '',
+        city: parts[4] || '',
+        province: parts[5] || '',
+        postalCode: parts[6] || '',
+        additionalInfo: parts[7] || ''
+      };
+    }
+
+    return {
+      ...defaultAddress,
+      additionalInfo: address
+    };
+  }
+
+  private combineAddress(): string {
+    const addr = this.addressForm.value;
+    
+    const parts: string[] = [];
+    
+    if (addr.street && addr.number) {
+      parts.push(`${addr.street} ${addr.number}`);
+    }
+    
+    if (addr.floor || addr.apartment) {
+      const floorApt: string[] = [];
+      if (addr.floor) floorApt.push(`Piso ${addr.floor}`);
+      if (addr.apartment) floorApt.push(`Depto ${addr.apartment}`);
+      parts.push(floorApt.join(', '));
+    }
+    
+    if (addr.city) {
+      parts.push(addr.city);
+    }
+    
+    if (addr.province) {
+      let provincePart = addr.province;
+      if (addr.postalCode) {
+        provincePart += ` (CP ${addr.postalCode})`;
+      }
+      parts.push(provincePart);
+    }
+    
+    if (addr.additionalInfo) {
+      parts.push(`- ${addr.additionalInfo}`);
+    }
+    
+    const parseableFormat = [
+      addr.street || '',
+      addr.number || '',
+      addr.floor || '',
+      addr.apartment || '',
+      addr.city || '',
+      addr.province || '',
+      addr.postalCode || '',
+      addr.additionalInfo || ''
+    ].join('|');
+    
+    return parts.join(', ') + ' ||ADDR||' + parseableFormat;
   }
 }

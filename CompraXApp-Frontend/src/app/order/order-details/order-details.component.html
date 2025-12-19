@@ -99,9 +99,9 @@
             <span class="info-value">{{ order.createdAt | date:'medium' }}</span>
           </div>
           
-          <div class="info-row" *ngIf="order.shippingAddress">
-            <span class="info-label">Shipping Address:</span>
-            <span class="info-value">{{ order.shippingAddress }}</span>
+          <div class="info-row shipping-address" *ngIf="order.shippingAddress">
+            <span class="info-label">📍 Shipping Address:</span>
+            <span class="info-value">{{ getFormattedShippingAddress() }}</span>
           </div>
           
           <div class="info-row" *ngIf="order.paymentMethod">

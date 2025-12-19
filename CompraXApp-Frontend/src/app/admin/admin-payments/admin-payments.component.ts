@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AdminService, PaymentDTO as AdminPaymentDTO } from '../admin.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-admin-payments',
@@ -20,7 +21,7 @@ export class AdminPaymentsComponent implements OnInit {
   pendingPaymentsAvailable = true;
   allPaymentsAvailable = true;
 
-  constructor(private adminService: AdminService) { }
+  constructor(private adminService: AdminService, private toastService: ToastService) { }
 
   ngOnInit(): void {
     this.loadPayments();
@@ -61,15 +62,15 @@ export class AdminPaymentsComponent implements OnInit {
     this.adminService.confirmPayment(paymentId).subscribe({
       next: (response) => {
         console.log('✅ Payment confirmed:', response);
-        alert('Payment confirmed successfully!');
+        this.toastService.success('Payment confirmed successfully!');
         this.loadPayments();
       },
       error: (err) => {
         console.error('❌ Error confirming payment:', err);
         if (err.status === 500) {
-          alert('Payment confirmation endpoint not implemented in backend yet.');
+          this.toastService.warning('Payment confirmation endpoint not implemented in backend yet.');
         } else {
-          alert('Error confirming payment: ' + (err.error?.error || err.message));
+          this.toastService.error('Error confirming payment: ' + (err.error?.error || err.message));
         }
       }
     });

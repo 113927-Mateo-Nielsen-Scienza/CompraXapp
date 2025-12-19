@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { AdminService } from '../admin.service';
 import { AuthService } from '../../auth/auth.service';
 import { UserDTO } from '../admin.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-admin-users',
@@ -21,7 +22,8 @@ export class AdminUsersComponent implements OnInit {
 
   constructor(
     private adminService: AdminService,
-    private authService: AuthService
+    private authService: AuthService,
+    private toastService: ToastService
   ) { }
 
   ngOnInit(): void {
@@ -54,16 +56,16 @@ export class AdminUsersComponent implements OnInit {
         if (typeof role === 'string') {
           return role;
         } else if (typeof role === 'object' && role.name) {
-          return role.name; // Si es un objeto con propiedad 'name'
+          return role.name;
         } else if (typeof role === 'object' && role.authority) {
-          return role.authority; // Si es un objeto con propiedad 'authority'
+          return role.authority;
         } else {
-          return String(role); // Convertir a string como último recurso
+          return String(role);
         }
       });
     }
     
-    return [String(roles)]; // Si no es array, convertir a array de un elemento
+    return [String(roles)];
   }
 
   formatRole(role: any): string {
@@ -112,7 +114,7 @@ export class AdminUsersComponent implements OnInit {
         },
         error: (err: any) => {
           console.error(`❌ Error ${action}ing user:`, err);
-          alert(err.error?.error || `Failed to ${action} user`);
+          this.toastService.error(err.error?.error || `Failed to ${action} user`);
         }
       });
     }
@@ -122,7 +124,7 @@ export class AdminUsersComponent implements OnInit {
     if (confirm(`Are you sure you want to deactivate user ${user.name}?`)) {
       this.adminService.deleteUser(user.id).subscribe({
         next: () => {
-          user.active = false; // Actualizar estado local en lugar de eliminar
+          user.active = false;
           console.log('✅ User deactivated successfully');
         },
         error: (err: any) => {

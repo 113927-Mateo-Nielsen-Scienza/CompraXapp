@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { AdminService } from '../admin.service';
 import { AuthService } from '../../auth/auth.service';
 import { Product } from '../../models/Product';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-admin-products',
@@ -25,7 +26,8 @@ export class AdminProductsComponent implements OnInit {
   constructor(
     private adminService: AdminService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) { }
 
   ngOnInit(): void {
@@ -71,20 +73,18 @@ export class AdminProductsComponent implements OnInit {
     if (confirm(`Are you sure you want to delete "${product.name}"?`)) {
       this.adminService.deleteProduct(product.id).subscribe({
         next: () => {
-          alert('Product deleted successfully');
+          this.toastService.success('Product deleted successfully');
           this.loadProducts();
         },
         error: (err) => {
           console.error('Error deleting product:', err);
-          alert('Failed to delete product: ' + (err.error?.message || 'Please try again'));
+          this.toastService.error('Failed to delete product: ' + (err.error?.message || 'Please try again'));
         }
       });
     }
   }
 
   toggleProductStatus(product: Product): void {
-    // Aquí podrías implementar la funcionalidad para activar/desactivar productos
-    // Por ahora solo mostramos el estado
     console.log('Toggle product status:', product);
   }
 

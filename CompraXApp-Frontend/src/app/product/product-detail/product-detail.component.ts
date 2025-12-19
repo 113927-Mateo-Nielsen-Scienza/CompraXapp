@@ -2,11 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '../product.service';
 import { Product } from '../../models/Product';
-import { CartService } from '../../cart/cart.service'; // Ajusta la ruta
-import { AuthService } from '../../auth/auth.service'; // Ajusta la ruta
+import { CartService } from '../../cart/cart.service';
+import { AuthService } from '../../auth/auth.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PromotionService, ProductWithPromotion } from '../../services/promotion.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-product-detail',
@@ -27,7 +28,8 @@ export class ProductDetailComponent implements OnInit {
     private productService: ProductService,
     private cartService: CartService,
     private authService: AuthService,
-    private promotionService: PromotionService
+    private promotionService: PromotionService,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -36,7 +38,6 @@ export class ProductDetailComponent implements OnInit {
       this.loadProduct(productId);
     } else {
       this.isLoading = false;
-      // Manejar caso de ID no válido, quizás redirigir
       this.router.navigate(['/products']);
     }
     this.authService.currentUser.subscribe(user => {
@@ -67,7 +68,6 @@ export class ProductDetailComponent implements OnInit {
       error: (error) => {
         console.error('❌ Error loading product:', error);
         this.isLoading = false;
-        // Manejar error, quizás redirigir
         this.router.navigate(['/products']);
       }
     });
@@ -84,12 +84,11 @@ export class ProductDetailComponent implements OnInit {
     this.cartService.addItemToCart(this.product.id, this.quantity).subscribe({
       next: (cart) => {
         console.log('✅ Product added to cart with promotional price');
-        // Mostrar mensaje de éxito
-        alert('Product added to cart successfully!');
+        this.toastService.success('Product added to cart successfully!');
       },
       error: (error) => {
         console.error('❌ Error adding to cart:', error);
-        alert('Error adding product to cart. Please try again.');
+        this.toastService.error('Error adding product to cart. Please try again.');
       }
     });
   }

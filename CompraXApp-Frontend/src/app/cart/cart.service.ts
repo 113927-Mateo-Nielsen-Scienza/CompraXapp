@@ -62,21 +62,17 @@ export class CartService {
   private applyPromotionsToCart(cart: CartDTO): CartDTO {
     if (!cart || !cart.items) return cart;
 
-    // Aplicar promociones a cada item del carrito
     const updatedItems = cart.items.map(item => {
-      // Crear un objeto "producto" temporal para aplicar promociones
       const tempProduct = {
         id: item.productId,
         name: item.productName,
-        price: item.originalPrice || item.pricePerUnit, // Usar precio original
-        stockQuantity: 999, // Temporal
+        price: item.originalPrice || item.pricePerUnit,
+        stockQuantity: 999,
         active: true
       };
 
-      // Aplicar promoción
       const productWithPromotion = this.promotionService.applyPromotionToProduct(tempProduct);
 
-      // Actualizar el item del carrito con el precio promocional
       return {
         ...item,
         pricePerUnit: productWithPromotion.price,
@@ -87,7 +83,6 @@ export class CartService {
       };
     });
 
-    // Recalcular total del carrito
     const newTotalAmount = updatedItems.reduce((total, item) => {
       return total + (item.pricePerUnit * item.quantity);
     }, 0);

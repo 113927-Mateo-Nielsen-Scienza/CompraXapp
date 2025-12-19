@@ -7,6 +7,7 @@ import { CartService } from '../../cart/cart.service';
 import { AuthService, LoginResponse } from '../../auth/auth.service';
 import { Product } from '../../models/Product';
 import { PromotionService, ProductWithPromotion } from '../../services/promotion.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-product-list',
@@ -30,7 +31,8 @@ export class ProductListComponent implements OnInit {
     private cartService: CartService,
     private authService: AuthService,
     private router: Router,
-    private promotionService: PromotionService
+    private promotionService: PromotionService,
+    private toastService: ToastService
   ) { }
 
   ngOnInit(): void {
@@ -119,7 +121,6 @@ export class ProductListComponent implements OnInit {
     this.cartService.addItemToCart(product.id, quantity).subscribe({
       next: (cart) => {
         console.log('Product added to cart successfully');
-        // Mostrar feedback al usuario
       },
       error: (err) => {
         console.error('Error adding product to cart:', err);
@@ -141,37 +142,9 @@ export class ProductListComponent implements OnInit {
 
   private showNotification(message: string, type: 'success' | 'error'): void {
     if (type === 'success') {
-      const notification = document.createElement('div');
-      notification.className = 'notification success';
-      notification.textContent = message;
-      notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: var(--secondary-color);
-        color: white;
-        padding: 1rem 2rem;
-        border-radius: 0.5rem;
-        z-index: 9999;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transform: translateX(100%);
-        transition: transform 0.3s ease;
-      `;
-      
-      document.body.appendChild(notification);
-      
-      setTimeout(() => {
-        notification.style.transform = 'translateX(0)';
-      }, 100);
-      
-      setTimeout(() => {
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-          document.body.removeChild(notification);
-        }, 300);
-      }, 3000);
+      this.toastService.success(message);
     } else {
-      alert(message);
+      this.toastService.error(message);
     }
   }
 }

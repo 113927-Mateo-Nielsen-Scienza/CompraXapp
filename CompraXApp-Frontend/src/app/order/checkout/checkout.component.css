@@ -1,7 +1,7 @@
 .checkout-container {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: var(--spacing-6);
+  padding: var(--spacing-8);
   background: var(--gray-50);
   min-height: 100vh;
 }
@@ -9,9 +9,9 @@
 .checkout-container h2 {
   text-align: center;
   color: var(--gray-900);
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-3xl);
   font-weight: 700;
-  margin-bottom: var(--spacing-8);
+  margin-bottom: var(--spacing-10);
   background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -25,12 +25,12 @@
 
 .checkout-content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-8);
-  margin-top: var(--spacing-6);
+  grid-template-columns: 1.4fr 1fr;
+  gap: var(--spacing-10);
+  align-items: start;
 }
 
-/* ===== ORDER SUMMARY FIX ===== */
+/* ===== ORDER SUMMARY ===== */
 .order-summary {
   background: white;
   padding: var(--spacing-8);
@@ -254,16 +254,131 @@
   font-size: var(--font-size-base);
 }
 
-/* ===== RESPONSIVE DESIGN ===== */
-@media (max-width: 992px) {
+/* ===== ACCESSIBILITY ===== */
+@media (prefers-reduced-motion: reduce) {
+  .btn:hover,
+  .form-group input:focus,
+  .form-group textarea:focus {
+    transform: none;
+  }
+}
+
+/* ===== ADDRESS GRID ===== */
+.address-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-5);
+  margin-bottom: var(--spacing-8);
+}
+
+.address-grid .street-field {
+  grid-column: span 1;
+}
+
+.address-grid .number-field {
+  grid-column: span 1;
+}
+
+.address-grid .floor-field,
+.address-grid .apartment-field {
+  grid-column: span 1;
+}
+
+.address-grid .city-field {
+  grid-column: span 1;
+}
+
+.address-grid .province-field {
+  grid-column: span 1;
+}
+
+.address-grid .postal-field {
+  grid-column: span 1;
+}
+
+.address-grid .additional-field {
+  grid-column: span 2;
+}
+
+.address-grid .form-group {
+  margin-bottom: 0;
+}
+
+.address-grid label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: var(--spacing-2);
+}
+
+.address-grid input,
+.address-grid select {
+  width: 100%;
+  padding: var(--spacing-4);
+  font-size: var(--font-size-base);
+  border: 2px solid var(--gray-300);
+  border-radius: var(--border-radius-lg);
+  transition: all 0.2s ease;
+  background: white;
+  box-sizing: border-box;
+}
+
+.address-grid input:focus,
+.address-grid select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+.address-grid input.error,
+.address-grid select.error {
+  border-color: var(--danger-color);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+}
+
+.address-grid .error-message {
+  font-size: var(--font-size-xs);
+  color: var(--danger-color);
+  margin-top: var(--spacing-2);
+  font-weight: 500;
+}
+
+.address-grid select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+  cursor: pointer;
+}
+
+.checkout-form h3 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-3);
+}
+
+.checkout-form h3 i {
+  color: var(--primary-color);
+  font-size: var(--font-size-xl);
+}
+
+/* ===== RESPONSIVE CHECKOUT ===== */
+@media (max-width: 1024px) {
   .checkout-content {
     grid-template-columns: 1fr;
-    gap: var(--spacing-6);
+    gap: var(--spacing-8);
   }
   
   .order-summary {
     order: -1;
     position: static;
+  }
+  
+  .checkout-container {
+    padding: var(--spacing-6);
   }
 }
 
@@ -272,66 +387,61 @@
     padding: var(--spacing-4);
   }
   
+  .checkout-container h2 {
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--spacing-6);
+  }
+  
   .checkout-form,
   .order-summary {
     padding: var(--spacing-6);
   }
   
-  .form-group input,
-  .form-group textarea,
-  .form-group select {
-    padding: var(--spacing-4);
+  .address-grid {
+    gap: var(--spacing-4);
+  }
+  
+  .address-grid input,
+  .address-grid select {
+    padding: var(--spacing-3);
     font-size: 16px; /* Prevent zoom on iOS */
-  }
-  
-  .btn {
-    width: 100%;
-    padding: var(--spacing-4);
-    font-size: var(--font-size-base);
-  }
-  
-  .item-info {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-1);
-  }
-  
-  .order-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-2);
-  }
-  
-  .item-price {
-    align-self: flex-end;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 576px) {
   .checkout-container {
-    padding: var(--spacing-2);
+    padding: var(--spacing-3);
   }
   
   .checkout-form,
   .order-summary {
+    padding: var(--spacing-5);
+    border-radius: var(--border-radius-lg);
+  }
+  
+  .address-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-4);
+  }
+  
+  .address-grid .street-field,
+  .address-grid .number-field,
+  .address-grid .floor-field,
+  .address-grid .apartment-field,
+  .address-grid .city-field,
+  .address-grid .province-field,
+  .address-grid .postal-field,
+  .address-grid .additional-field {
+    grid-column: span 1;
+  }
+  
+  .btn {
     padding: var(--spacing-4);
+    font-size: var(--font-size-base);
   }
   
-  .checkout-container h2 {
-    font-size: var(--font-size-xl);
-  }
-  
-  .order-summary h3,
-  .checkout-form h3 {
+  .checkout-form h3,
+  .order-summary h3 {
     font-size: var(--font-size-lg);
-  }
-}
-
-/* ===== ACCESSIBILITY ===== */
-@media (prefers-reduced-motion: reduce) {
-  .btn:hover,
-  .form-group input:focus,
-  .form-group textarea:focus {
-    transform: none;
   }
 }

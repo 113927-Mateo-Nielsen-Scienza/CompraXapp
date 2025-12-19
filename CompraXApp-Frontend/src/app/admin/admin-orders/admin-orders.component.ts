@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../admin.service';
+import { ToastService } from '../../services/toast.service';
 
 interface Order {
   id: number;
@@ -40,7 +41,7 @@ export class AdminOrdersComponent implements OnInit {
     { value: 'CANCELLED', label: 'Cancelled' }
   ];
 
-  constructor(private adminService: AdminService) { }
+  constructor(private adminService: AdminService, private toastService: ToastService) { }
 
   ngOnInit(): void {
     this.loadOrders();
@@ -65,7 +66,7 @@ export class AdminOrdersComponent implements OnInit {
 
     const allowedStatuses = ['PENDING', 'PROCESSING', 'COMPLETED', 'CANCELLED'];
     if (!allowedStatuses.includes(newStatus)) {
-      alert(`Status "${newStatus}" is not allowed. Valid statuses: ${allowedStatuses.join(', ')}`);
+      this.toastService.warning(`Status "${newStatus}" is not allowed. Valid statuses: ${allowedStatuses.join(', ')}`);
       return;
     }
 
@@ -76,7 +77,7 @@ export class AdminOrdersComponent implements OnInit {
         next: (response) => {
           console.log('✅ Status update successful:', response);
           order.status = newStatus;
-          alert('Order status updated successfully');
+          this.toastService.success('Order status updated successfully');
         },
         error: (err) => {
           console.error('❌ Status update failed:', err);
@@ -86,7 +87,7 @@ export class AdminOrdersComponent implements OnInit {
             errorMessage = err.error.error;
           }
           
-          alert(errorMessage);
+          this.toastService.error(errorMessage);
         }
       });
     }

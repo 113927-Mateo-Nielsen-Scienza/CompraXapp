@@ -36,7 +36,7 @@ export class LoginComponent {
         password: this.loginForm.value.password
       };
 
-      console.log('Login data being sent:', loginData); // Para debug
+      console.log('Login data being sent:', loginData);
 
       this.authService.login(loginData).subscribe({
         next: (response) => {

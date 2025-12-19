@@ -35,7 +35,6 @@ export class NotificationService implements OnDestroy {
     );
   }
 
-  // Alias para compatibilidad
   getNotifications(page: number = 0, size: number = 20): Observable<any> {
     return this.getAllNotifications();
   }
@@ -65,7 +64,6 @@ export class NotificationService implements OnDestroy {
   }
 
   deleteNotification(notificationId: number): Observable<void> {
-    // Simulación local ya que no existe en backend
     return new Observable(observer => {
       const currentNotifications = this.notificationsSubject.value;
       const filteredNotifications = currentNotifications.filter(n => n.id !== notificationId);
@@ -75,7 +73,6 @@ export class NotificationService implements OnDestroy {
     });
   }
 
-  // Método para recargar notificaciones
   loadNotifications(): void {
     this.getAllNotifications().subscribe({
       next: (notifications) => {
@@ -87,7 +84,6 @@ export class NotificationService implements OnDestroy {
     });
   }
 
-  // Métodos de utilidad para el frontend
   getNotificationIcon(type: string): string {
     switch (type) {
       case 'ORDER_CREATED': return 'fas fa-shopping-cart';
@@ -111,7 +107,6 @@ export class NotificationService implements OnDestroy {
   }
 
   startAutoRefresh(): void {
-    // Actualizar cada 30 segundos
     this.refreshInterval = setInterval(() => {
       this.loadNotifications();
     }, 30000);

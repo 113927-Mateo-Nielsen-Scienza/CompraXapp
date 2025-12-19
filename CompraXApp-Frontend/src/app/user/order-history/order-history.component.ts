@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { OrderService, OrderDTO } from '../../order/order.service';
 import { AuthService } from '../../auth/auth.service';
 import { UserService, UserProfileResponse, UserUpdateRequest } from '../user.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-order-history',
@@ -32,7 +33,8 @@ export class OrderHistoryComponent implements OnInit {
     private orderService: OrderService,
     private userService: UserService,
     private authService: AuthService,
-    public router: Router
+    public router: Router,
+    private toastService: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -325,7 +327,7 @@ export class OrderHistoryComponent implements OnInit {
 
   reorderItems(order: OrderDTO): void {
     console.log('Reordering items from order:', order.id);
-    alert('Reorder functionality will be implemented soon');
+    this.toastService.info('Reorder functionality will be implemented soon');
   }
 
   nextPage(): void {

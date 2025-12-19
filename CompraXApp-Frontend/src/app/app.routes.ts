@@ -89,7 +89,6 @@ export const routes: Routes = [
     loadComponent: () => import('./help/user-manual/user-manual.component').then(c => c.UserManualComponent)
   },
 
-  // Redirecciones
   {
     path: '',
     redirectTo: '/products',

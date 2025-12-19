@@ -38,7 +38,7 @@ export class ProductFormComponent implements OnInit {
       price: ['', [Validators.required, Validators.min(0.01)]],
       stockQuantity: ['', [Validators.required, Validators.min(0)]],
       active: [true],
-      imageUrl: [''] // Campo para URL de imagen
+      imageUrl: ['']
     });
   }
 
@@ -69,7 +69,6 @@ export class ProductFormComponent implements OnInit {
         console.log('Product loaded:', product);
         this.currentProduct = product;
         
-        // Cargar TODOS los datos incluida imageUrl
         this.productForm.patchValue({
           name: product.name || '',
           description: product.description || '',
@@ -100,7 +99,6 @@ export class ProductFormComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
 
-    // Crear objeto con TODOS los campos
     const formValue = this.productForm.value;
     const productRequest = {
       name: formValue.name.trim(),
@@ -123,7 +121,6 @@ export class ProductFormComponent implements OnInit {
         this.successMessage = `Product ${this.isEditMode ? 'updated' : 'created'} successfully!`;
         this.isSubmitting = false;
         
-        // Redirigir después de 1.5 segundos para mostrar mensaje
         setTimeout(() => {
           this.router.navigate(['/admin/products']);
         }, 1500);
@@ -145,7 +142,6 @@ export class ProductFormComponent implements OnInit {
     const target = event.target as HTMLImageElement;
     if (target) {
       target.style.display = 'none';
-      // Opcionalmente mostrar mensaje de error
       console.warn('Failed to load image preview');
     }
   }

@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../auth.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-register',
@@ -21,7 +22,8 @@ export class RegisterComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) {
     this.registerForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.minLength(2)]],
@@ -50,7 +52,7 @@ export class RegisterComponent {
       this.authService.register(signupData).subscribe({
         next: (response) => {
           this.loading = false;
-          alert('¡Registro exitoso! Revisa tu correo para verificar tu cuenta.');
+          this.toastService.success('¡Registro exitoso! Revisa tu correo para verificar tu cuenta.');
           this.router.navigate(['/auth/verify-account'], { 
             queryParams: { email: signupData.email } 
           });

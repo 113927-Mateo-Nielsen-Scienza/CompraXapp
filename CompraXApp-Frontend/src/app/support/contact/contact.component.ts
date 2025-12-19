@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-contact',
@@ -66,7 +67,7 @@ export class ContactComponent {
     }
   ];
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private toastService: ToastService) {
     this.contactForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
@@ -89,7 +90,6 @@ export class ContactComponent {
     this.errorMessage = '';
     this.successMessage = '';
 
-    // Simular envío del formulario
     setTimeout(() => {
       this.isSubmitting = false;
       this.successMessage = '✅ Thank you! Your message has been sent successfully. We\'ll get back to you within 24 hours.';
@@ -130,7 +130,6 @@ export class ContactComponent {
   }
 
   openLiveChat(): void {
-  
-    alert('Live chat feature coming soon!');
+    this.toastService.info('Live chat feature coming soon!');
   }
 }

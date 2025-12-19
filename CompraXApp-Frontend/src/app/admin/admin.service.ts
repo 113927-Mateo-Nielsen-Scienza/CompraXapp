@@ -88,7 +88,7 @@ export interface PromotionDTO {
   title: string;
   description: string;
   discountPercentage: number;
-  startDate: string; // ISO string from backend
+  startDate: string;
   endDate: string;
   active: boolean;
   createdAt?: string;
@@ -98,7 +98,7 @@ export interface PromotionCreateRequest {
   title: string;
   description: string;
   discountPercentage: number;
-  startDate: string; // ISO string
+  startDate: string;
   endDate: string;
   active?: boolean;
 }

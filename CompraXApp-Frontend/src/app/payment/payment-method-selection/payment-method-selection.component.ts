@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { CartService, CartItemDTO } from '../../cart/cart.service';
 import { AuthService } from '../../auth/auth.service';
@@ -15,32 +15,56 @@ export class PaymentMethodSelectionComponent implements OnInit {
   cartItems: CartItemDTO[] = [];
   total: number = 0;
   user: any;
+  private isBrowser: boolean;
 
   constructor(
     private cartService: CartService,
     private authService: AuthService,
-    private router: Router
-  ) {}
+    private router: Router,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
 
   ngOnInit(): void {
-    this.loadCartData();
     this.loadUserData();
-    this.validateCheckout();
+    
+    if (this.isBrowser) {
+      const checkoutData = sessionStorage.getItem('checkoutData');
+      
+      if (!checkoutData) {
+        this.router.navigate(['/order/checkout']);
+        return;
+      }
+      
+      this.loadCartDataAndValidate();
+    }
   }
 
   validateCheckout(): void {
-    // Verificar que hay datos de checkout
-    const checkoutData = sessionStorage.getItem('checkoutData');
-    if (!checkoutData) {
-      this.router.navigate(['/checkout']);
-      return;
-    }
-
-    // Verificar que hay items en el carrito
     if (this.cartItems.length === 0) {
       this.router.navigate(['/cart']);
       return;
     }
+  }
+
+  loadCartDataAndValidate(): void {
+    const cart = this.cartService.getCurrentCartValue();
+    
+    if (cart && cart.items && cart.items.length > 0) {
+      this.cartItems = cart.items;
+      this.total = cart.totalAmount || 0;
+      return;
+    }
+    
+    this.cartService.cart$.subscribe(cartData => {
+      if (cartData) {
+        this.cartItems = cartData.items || [];
+        this.total = cartData.totalAmount || 0;
+      }
+    });
+    
+    this.cartService.getCart().subscribe();
   }
 
   loadCartData(): void {
