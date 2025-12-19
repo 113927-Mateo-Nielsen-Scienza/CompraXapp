@@ -20,7 +20,7 @@ export class AdminProductsComponent implements OnInit {
   searchKeyword: string = '';
   minPrice: number | undefined;
   maxPrice: number | undefined;
-  selectedProduct: Product | null = null; // ✅ AGREGAR propiedad
+  selectedProduct: Product | null = null;
 
   constructor(
     private adminService: AdminService,
@@ -88,17 +88,14 @@ export class AdminProductsComponent implements OnInit {
     console.log('Toggle product status:', product);
   }
 
-  // AGREGAR método selectProduct
   selectProduct(product: Product): void {
     this.selectedProduct = product;
   }
 
-  // AGREGAR método closeDetails
   closeDetails(): void {
     this.selectedProduct = null;
   }
 
-  // Agregar método para manejar errores de imagen
   onImageError(event: any): void {
     event.target.src = 'assets/default-product.png';
   }

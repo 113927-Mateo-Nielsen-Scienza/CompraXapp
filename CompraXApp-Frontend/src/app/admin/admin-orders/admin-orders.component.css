@@ -232,6 +232,7 @@
 .value {
   color: var(--gray-900);
   font-weight: 500;
+  text-align: right;
 }
 
 .value.amount {
@@ -304,6 +305,8 @@
 .item-row span:last-child {
   color: var(--primary-color);
   font-weight: 700;
+  min-width: 70px;
+  text-align: right;
 }
 
 /* ===== RESPONSIVE DESIGN ===== */

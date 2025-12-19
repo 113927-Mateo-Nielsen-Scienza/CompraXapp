@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 
 @Service
+@SuppressWarnings("null")
 public class ReceiptService {
     
     @Autowired

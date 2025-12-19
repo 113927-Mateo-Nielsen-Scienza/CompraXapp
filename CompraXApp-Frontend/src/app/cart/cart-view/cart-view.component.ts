@@ -233,7 +233,6 @@ export class CartViewComponent implements OnInit, OnDestroy {
     return !!(this.cart?.items && this.cart.items.length > 0);
   }
 
-  // ✅ CORREGIR: Usar this.cart.items en lugar de this.cartItems
   getOriginalTotal(): number {
     if (!this.cart?.items) return 0;
     return this.cart.items.reduce((total: number, item: CartItemDTO) => {
@@ -242,7 +241,6 @@ export class CartViewComponent implements OnInit, OnDestroy {
     }, 0);
   }
 
-  // ✅ CORREGIR: Usar this.cart.items en lugar de this.cartItems
   getTotalDiscount(): number {
     return this.getOriginalTotal() - this.getTotal();
   }

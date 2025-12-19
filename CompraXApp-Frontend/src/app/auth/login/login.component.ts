@@ -13,6 +13,7 @@ export class LoginComponent {
   loginForm: FormGroup;
   errorMessage: string = '';
   isLoading: boolean = false;
+  showPassword: boolean = false;
 
   constructor(
     private fb: FormBuilder,
@@ -31,8 +32,8 @@ export class LoginComponent {
       this.errorMessage = '';
 
       const loginData = {
-        email: this.loginForm.value.email,      // Asegúrate que sea 'email'
-        password: this.loginForm.value.password // Asegúrate que sea 'password'
+        email: this.loginForm.value.email,
+        password: this.loginForm.value.password
       };
 
       console.log('Login data being sent:', loginData); // Para debug

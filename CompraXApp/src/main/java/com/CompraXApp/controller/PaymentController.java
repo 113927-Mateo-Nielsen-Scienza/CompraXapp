@@ -22,6 +22,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/payments")
+@SuppressWarnings("null")
 public class PaymentController {
 
     @Autowired

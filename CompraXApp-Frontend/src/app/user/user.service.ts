@@ -4,7 +4,6 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
-// ✅ INTERFACES EXACTAS según backend
 export interface User {
   id: number;
   name: string;
@@ -30,7 +29,6 @@ export interface UserProfileResponse {
   purchaseHistory: OrderDTO[];
 }
 
-// ✅ Importar OrderDTO del OrderService
 interface OrderDTO {
   id: number;
   userId: number;
@@ -53,14 +51,12 @@ export class UserService {
 
   constructor(private http: HttpClient) { }
 
-  // ✅ ENDPOINT EXACTO: GET /api/users/me
   getMyProfile(): Observable<UserProfileResponse> {
     return this.http.get<UserProfileResponse>(`${this.apiUrl}/me`, {
       withCredentials: true
     }).pipe(catchError(this.handleError));
   }
 
-  // ✅ ENDPOINT EXACTO: PUT /api/users/me
   updateMyProfile(updateRequest: UserUpdateRequest): Observable<UserProfileResponse> {
     return this.http.put<UserProfileResponse>(`${this.apiUrl}/me`, updateRequest, {
       withCredentials: true,
@@ -68,21 +64,18 @@ export class UserService {
     }).pipe(catchError(this.handleError));
   }
 
-  // ✅ ENDPOINT EXACTO: DELETE /api/users/me
   deleteMyAccount(): Observable<{message: string}> {
     return this.http.delete<{message: string}>(`${this.apiUrl}/me`, {
       withCredentials: true
     }).pipe(catchError(this.handleError));
   }
 
-  // ✅ ENDPOINT EXACTO: GET /api/users/me/purchase-history
   getMyPurchaseHistory(): Observable<OrderDTO[]> {
     return this.http.get<OrderDTO[]>(`${this.apiUrl}/me/purchase-history`, {
       withCredentials: true
     }).pipe(catchError(this.handleError));
   }
 
-  // ✅ MÉTODOS ADMIN - endpoints exactos
   getUserById(id: number): Observable<UserProfileResponse> {
     return this.http.get<UserProfileResponse>(`${this.apiUrl}/${id}`, {
       withCredentials: true

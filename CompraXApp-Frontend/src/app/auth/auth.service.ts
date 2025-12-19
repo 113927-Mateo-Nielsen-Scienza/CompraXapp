@@ -6,7 +6,6 @@ import { catchError, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
 
-// ✅ INTERFACES EXACTAS según backend
 export interface LoginRequest {
   email: string;
   password: string;
@@ -57,13 +56,11 @@ export class AuthService {
     this.currentUser = this.currentUserSubject.asObservable();
   }
 
-  // ✅ ENDPOINT EXACTO: POST /api/auth/signup
   register(userData: SignupRequest): Observable<MessageResponse> {
     return this.http.post<MessageResponse>(`${this.apiUrl}/signup`, userData)
       .pipe(catchError(this.handleError));
   }
 
-  // ✅ ENDPOINT EXACTO: POST /api/auth/signin
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.apiUrl}/signin`, credentials).pipe(
       tap(response => {
@@ -76,7 +73,6 @@ export class AuthService {
     );
   }
 
-  // ✅ ENDPOINT EXACTO: POST /api/auth/verify-account
   verify(verificationData: VerificationRequest): Observable<MessageResponse> {
     return this.verifyAccount(verificationData);
   }
@@ -86,28 +82,24 @@ export class AuthService {
       .pipe(catchError(this.handleError));
   }
 
-  // ✅ ENDPOINT EXACTO: POST /api/auth/logout
   logout(): void {
     this.http.post(`${this.apiUrl}/logout`, {}).subscribe({
       next: () => {
         this.clearUserData();
       },
       error: () => {
-        // Limpiar datos locales incluso si falla la request
         this.clearUserData();
       }
     });
   }
 
-  // ✅ ENDPOINT EXACTO: POST /api/auth/password-reset-request
   requestPasswordReset(email: string): Observable<MessageResponse> {
     return this.http.post<MessageResponse>(`${this.apiUrl}/password-reset-request`, { email })
       .pipe(catchError(this.handleError));
   }
 
-  // ✅ ENDPOINT EXACTO: POST /api/auth/reset-password
-  resetPassword(token: string, newPassword: string): Observable<MessageResponse> {
-    return this.http.post<MessageResponse>(`${this.apiUrl}/reset-password?token=${token}&newPassword=${newPassword}`, {})
+  resetPassword(email: string, code: string, newPassword: string): Observable<MessageResponse> {
+    return this.http.post<MessageResponse>(`${this.apiUrl}/reset-password`, { email, code, newPassword })
       .pipe(catchError(this.handleError));
   }
 

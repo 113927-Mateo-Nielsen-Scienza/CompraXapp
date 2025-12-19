@@ -71,6 +71,13 @@ public class AuthController {
             User user = userOpt.get();
             System.out.println("✅ Usuario encontrado: " + user.getName());
             
+            // ✅ NUEVO: Verificar que el usuario esté activo
+            if (!user.isActive()) {
+                System.out.println("❌ Usuario desactivado: " + user.getEmail());
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new MessageResponse("Tu cuenta ha sido desactivada. Contacta al administrador."));
+            }
+            
             // Autenticar usando Spring Security con SESIONES
             Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword())
@@ -142,14 +149,27 @@ public class AuthController {
 
     @PostMapping("/password-reset-request")
     public ResponseEntity<?> requestPasswordReset(@Valid @RequestBody PasswordResetRequest request) {
-        userService.initiatePasswordReset(request);
-        return ResponseEntity.ok(Map.of("message", "Si el email existe, recibirás un enlace para restablecer tu contraseña"));
+        try {
+            userService.initiatePasswordReset(request);
+            return ResponseEntity.ok(Map.of("message", "Si el email existe, recibirás un código de 6 dígitos"));
+        } catch (Exception e) {
+            // No revelar si el email existe o no por seguridad
+            return ResponseEntity.ok(Map.of("message", "Si el email existe, recibirás un código de 6 dígitos"));
+        }
     }
 
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
-        userService.resetPassword(token, newPassword);
-        return ResponseEntity.ok(Map.of("message", "Contraseña actualizada correctamente"));
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+        try {
+            String email = request.get("email");
+            String code = request.get("code");
+            String newPassword = request.get("newPassword");
+            
+            userService.resetPasswordWithCode(email, code, newPassword);
+            return ResponseEntity.ok(Map.of("message", "Contraseña actualizada correctamente"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
     
     @PostMapping("/logout")

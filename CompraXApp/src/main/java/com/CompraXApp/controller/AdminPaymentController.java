@@ -18,6 +18,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/payments")
 @PreAuthorize("hasRole('ADMIN')")
+@SuppressWarnings("null")
 public class AdminPaymentController {
 
     @Autowired

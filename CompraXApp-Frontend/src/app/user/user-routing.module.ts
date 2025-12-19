@@ -5,7 +5,7 @@ import { OrderHistoryComponent } from './order-history/order-history.component';
 
 const routes: Routes = [
   { path: 'profile', component: UserProfileComponent },
-  { path: 'orders', component: OrderHistoryComponent }, // CAMBIAR: no redirigir más
+  { path: 'orders', component: OrderHistoryComponent },
   { path: '', redirectTo: 'profile', pathMatch: 'full' }
 ];
 

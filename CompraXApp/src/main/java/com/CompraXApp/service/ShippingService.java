@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 
 @Service
+@SuppressWarnings("null")
 public class ShippingService {
 
     @Autowired

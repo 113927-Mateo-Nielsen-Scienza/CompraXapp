@@ -50,7 +50,7 @@
         <div class="order-details">
           <div class="detail-row">
             <span class="label">Customer:</span>
-            <span class="value">{{ order.userEmail }}</span>
+            <span class="value">{{ order.userName || 'N/A' }}</span>
           </div>
           <div class="detail-row">
             <span class="label">Total:</span>
@@ -61,18 +61,14 @@
             <span class="value">{{ getTotalItems(order) }} items</span>
           </div>
           <div class="detail-row">
-            <span class="label">Payment:</span>
-            <span class="value">{{ order.paymentMethod }}</span>
-          </div>
-          <div class="detail-row">
             <span class="label">Date:</span>
-            <span class="value">{{ order.createdAt | date:'medium' }}</span>
+            <span class="value">{{ order.orderDate | date:'medium' }}</span>
           </div>
         </div>
 
         <div class="shipping-address">
           <strong>Shipping Address:</strong>
-          <p>{{ order.shippingAddress }}</p>
+          <p>{{ order.shippingAddress || 'No address provided' }}</p>
         </div>
 
         <div class="order-items">
@@ -81,7 +77,7 @@
             <div *ngFor="let item of order.items" class="item-row">
               <span>{{ item.productName }}</span>
               <span>x{{ item.quantity }}</span>
-              <span>{{ item.productPrice | currency:'USD':'symbol' }}</span>
+              <span>{{ item.price | currency:'USD':'symbol' }}</span>
             </div>
           </div>
         </div>

@@ -108,7 +108,6 @@ export class HelpCenterComponent {
     return this.faqItems.filter(item => item.popular);
   }
 
-  // Add this getter to fix the template error
   get selectedCategoryName(): string {
     const category = this.categories.find(c => c.id === this.selectedCategory);
     return category ? category.name : '';

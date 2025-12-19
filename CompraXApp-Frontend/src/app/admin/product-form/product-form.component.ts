@@ -76,7 +76,7 @@ export class ProductFormComponent implements OnInit {
           price: product.price || 0,
           stockQuantity: product.stockQuantity || 0,
           active: product.active !== undefined ? product.active : true,
-          imageUrl: product.imageUrl || '' // ✅ IMPORTANTE: Cargar URL existente
+          imageUrl: product.imageUrl || ''
         });
         
         this.isLoading = false;
@@ -141,7 +141,6 @@ export class ProductFormComponent implements OnInit {
     });
   }
 
-  // ✅ NUEVO: Método para manejar errores de imagen
   onImageError(event: Event): void {
     const target = event.target as HTMLImageElement;
     if (target) {

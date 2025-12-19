@@ -22,7 +22,6 @@ export class PaymentFailureComponent implements OnInit {
   errorMessage: string = '';
   status: string = '';
   
-  // ✅ ADD: Missing transactionDetails property
   transactionDetails: TransactionDetails | null = null;
 
   constructor(
@@ -37,7 +36,6 @@ export class PaymentFailureComponent implements OnInit {
       this.status = params['status'] || 'failure';
       this.errorMessage = params['error'] || 'Payment could not be processed successfully.';
       
-      // ✅ SET: Basic transaction details from params
       this.transactionDetails = {
         transactionId: this.paymentId || 'N/A',
         amount: params['amount'] ? parseFloat(params['amount']) : undefined,
@@ -67,12 +65,10 @@ export class PaymentFailureComponent implements OnInit {
     }
   }
 
-  // ✅ ADD: Missing chooseAnotherMethod method
   chooseAnotherMethod(): void {
     this.router.navigate(['/payment/method-selection']);
   }
 
-  // ✅ ADD: Missing backToCart method
   backToCart(): void {
     this.router.navigate(['/cart']);
   }

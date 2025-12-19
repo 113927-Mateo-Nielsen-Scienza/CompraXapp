@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@SuppressWarnings("null")
 public class OrderService {
     
     @Autowired
@@ -104,6 +105,34 @@ public class OrderService {
         }
 
        
+        for (OrderItem item : order.getItems()) {
+            Product product = item.getProduct();
+            if (product != null) {
+                product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
+                productRepository.save(product);
+            }
+        }
+        order.setStatus(Order.OrderStatus.CANCELLED);
+        orderRepository.save(order);
+    }
+
+    // ✅ NUEVO: Cancelar orden como usuario (solo sus propias órdenes)
+    @Transactional
+    public void cancelOrderAsUser(Long orderId, Long userId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+        
+        // Verificar que la orden pertenece al usuario
+        if (!order.getUser().getId().equals(userId)) {
+            throw new RuntimeException("You can only cancel your own orders.");
+        }
+        
+        // Solo se pueden cancelar órdenes PENDING
+        if (order.getStatus() != Order.OrderStatus.PENDING) {
+            throw new RuntimeException("Only pending orders can be cancelled. Current status: " + order.getStatus());
+        }
+
+        // Restaurar stock
         for (OrderItem item : order.getItems()) {
             Product product = item.getProduct();
             if (product != null) {

@@ -6,7 +6,6 @@ import { environment } from '../../environments/environment';
 import { AuthService } from '../auth/auth.service';
 import jsPDF from 'jspdf';
 
-// ✅ INTERFACES EXACTAS según backend
 export interface OrderDTO {
   id: number;
   userId: number;
@@ -19,10 +18,9 @@ export interface OrderDTO {
   trackingNumber?: string;
   shippingDate?: string;
   deliveryDate?: string;
-  createdAt?: string; // ✅ AGREGAR: Para order-details.component.html
-  paymentMethod?: string; // ✅ AGREGAR: Para order-details.component.html
+  createdAt?: string;
+  paymentMethod?: string;
   items: OrderItemDTO[];
-  // ✅ AGREGAR: User property faltante
   user?: {
     name: string;
     email: string;
@@ -53,7 +51,6 @@ export class OrderService {
 
   constructor(private http: HttpClient, private authService: AuthService) { }
 
-  // ✅ ENDPOINT EXACTO: POST /api/orders
   createOrder(orderData: CreateOrderRequest): Observable<OrderDTO> {
     if (!this.authService.isLoggedIn()) {
       return throwError(() => new Error('User not logged in'));
@@ -66,33 +63,31 @@ export class OrderService {
     return this.http.post<OrderDTO>(this.apiUrl, orderData).pipe(catchError(this.handleError));
   }
 
-  // ✅ ENDPOINT EXACTO: GET /api/orders/my-orders
   getUserOrders(): Observable<OrderDTO[]> {
     return this.http.get<OrderDTO[]>(`${this.apiUrl}/my-orders`).pipe(catchError(this.handleError));
   }
 
-  // ✅ AGREGAR método faltante como alias
   getOrderById(orderId: number): Observable<OrderDTO> {
     return this.getOrderDetails(orderId);
   }
 
-  // ✅ ENDPOINT EXACTO: GET /api/orders/{orderId}/details
   getOrderDetails(orderId: number): Observable<OrderDTO> {
     return this.http.get<OrderDTO>(`${this.apiUrl}/${orderId}/details`).pipe(catchError(this.handleError));
   }
 
-  // ✅ ENDPOINT EXACTO: POST /api/orders/{orderId}/whatsapp-payment
   requestWhatsAppPayment(orderId: number): Observable<{whatsappLink: string}> {
     return this.http.post<{whatsappLink: string}>(`${this.apiUrl}/${orderId}/whatsapp-payment`, {}).pipe(catchError(this.handleError));
   }
 
-  // ✅ NUEVO: Obtener comprobante
+  cancelOrder(orderId: number): Observable<void> {
+    return this.http.patch<void>(`${this.apiUrl}/${orderId}/cancel`, {}).pipe(catchError(this.handleError));
+  }
+
   getReceipt(orderId: number): Observable<ReceiptResponse> {
     return this.http.get<ReceiptResponse>(`${environment.apiUrl}/receipts/${orderId}`)
       .pipe(catchError(this.handleError));
   }
 
-  // ✅ NUEVO: Descargar comprobante como texto
   downloadReceipt(orderId: number): Observable<Blob> {
     return this.http.get(`${environment.apiUrl}/receipts/${orderId}`, {
       responseType: 'text'
@@ -102,7 +97,6 @@ export class OrderService {
     );
   }
 
-  // ✅ NUEVO: Generar PDF del comprobante
   async generateReceiptPDF(orderId: number): Promise<void> {
     try {
       // Obtener datos del comprobante
@@ -116,7 +110,6 @@ export class OrderService {
       // Crear PDF
       const pdf = new jsPDF();
       
-      // ✅ DISEÑO PROFESIONAL DEL PDF
       this.designProfessionalReceipt(pdf, orderDetails, response.receipt);
       
       // Descargar PDF
@@ -128,13 +121,11 @@ export class OrderService {
     }
   }
 
-  // ✅ DISEÑO PROFESIONAL DEL COMPROBANTE
   private designProfessionalReceipt(pdf: jsPDF, order: OrderDTO, receiptText: string): void {
     const pageWidth = pdf.internal.pageSize.width;
     const pageHeight = pdf.internal.pageSize.height;
     let currentY = 20;
 
-    // ✅ HEADER CON LOGO Y TÍTULO
     pdf.setFillColor(0, 123, 255);
     pdf.rect(0, 0, pageWidth, 40, 'F');
     
@@ -149,7 +140,6 @@ export class OrderService {
 
     currentY = 50;
 
-    // ✅ INFORMACIÓN DE LA ORDEN
     pdf.setTextColor(0, 0, 0);
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
@@ -159,7 +149,6 @@ export class OrderService {
     pdf.text(`Fecha: ${new Date(order.orderDate).toLocaleDateString('es-ES')}`, 20, currentY + 10);
     pdf.text(`Estado: ${this.getStatusText(order.status)}`, 20, currentY + 20);
     
-    // ✅ CORREGIR: User name con fallback mejorado
     const customerName = order.userName || order.user?.name || 'Usuario';
     const customerEmail = order.user?.email || '';
     
@@ -177,12 +166,10 @@ export class OrderService {
       currentY += 20;
     }
 
-    // ✅ LÍNEA SEPARADORA
     pdf.setDrawColor(200, 200, 200);
     pdf.line(20, currentY, pageWidth - 20, currentY);
     currentY += 10;
 
-    // ✅ TABLA DE PRODUCTOS
     pdf.setFontSize(14);
     pdf.setFont('helvetica', 'bold');
     pdf.text('PRODUCTOS:', 20, currentY);
@@ -201,7 +188,6 @@ export class OrderService {
     
     currentY += 20;
 
-    // ✅ ITEMS DE LA ORDEN
     pdf.setFont('helvetica', 'normal');
     let totalAmount = 0;
 
@@ -224,7 +210,6 @@ export class OrderService {
         
         currentY += 12;
 
-        // ✅ NUEVA PÁGINA SI ES NECESARIO
         if (currentY > pageHeight - 60) {
           pdf.addPage();
           currentY = 20;
@@ -232,7 +217,6 @@ export class OrderService {
       });
     }
 
-    // ✅ TOTAL
     currentY += 10;
     pdf.setDrawColor(0, 123, 255);
     pdf.setLineWidth(2);
@@ -242,7 +226,6 @@ export class OrderService {
     pdf.setFont('helvetica', 'bold');
     pdf.text(`TOTAL: $${(order.totalAmount || totalAmount).toFixed(2)}`, pageWidth - 45, currentY + 5, { align: 'right' });
 
-    // ✅ FOOTER
     currentY = pageHeight - 40;
     pdf.setFillColor(0, 123, 255);
     pdf.rect(0, currentY, pageWidth, 40, 'F');

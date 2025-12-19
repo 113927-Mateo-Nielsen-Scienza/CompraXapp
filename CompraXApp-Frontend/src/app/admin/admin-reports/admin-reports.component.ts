@@ -127,7 +127,6 @@ export class AdminReportsComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  // ✅ SIMPLIFICAR: Sin filtros complejos
   loadProductSalesStats(): void {
     this.loading = true;
     this.clearMessages();

@@ -5,16 +5,17 @@ import { AdminService } from '../admin.service';
 
 interface Order {
   id: number;
-  userEmail: string;
+  userId: number;
+  userName: string;
   totalAmount: number;
   status: string;
   shippingAddress: string;
-  paymentMethod: string;
-  createdAt: Date;
+  orderDate: Date;
   items: Array<{
     productName: string;
     quantity: number;
-    productPrice: number;
+    price: number;
+    subtotal: number;
   }>;
 }
 
@@ -31,12 +32,11 @@ export class AdminOrdersComponent implements OnInit {
   selectedStatus = '';
   searchKeyword = '';
 
-  // ✅ FIX: Estados que SÍ existen en el backend
   orderStatuses = [
     { value: '', label: 'All Orders' },
     { value: 'PENDING', label: 'Pending' },
     { value: 'PROCESSING', label: 'Processing' },
-    { value: 'COMPLETED', label: 'Completed' }, // ✅ Era DELIVERED
+    { value: 'COMPLETED', label: 'Completed' },
     { value: 'CANCELLED', label: 'Cancelled' }
   ];
 
@@ -63,7 +63,6 @@ export class AdminOrdersComponent implements OnInit {
   updateOrderStatus(order: Order, newStatus: string): void {
     if (order.status === newStatus) return;
 
-    // ✅ FIX: Estados permitidos según el backend
     const allowedStatuses = ['PENDING', 'PROCESSING', 'COMPLETED', 'CANCELLED'];
     if (!allowedStatuses.includes(newStatus)) {
       alert(`Status "${newStatus}" is not allowed. Valid statuses: ${allowedStatuses.join(', ')}`);
@@ -96,18 +95,16 @@ export class AdminOrdersComponent implements OnInit {
   get filteredOrders(): Order[] {
     let filtered = this.orders;
 
-    // Filter by status
     if (this.selectedStatus) {
       filtered = filtered.filter(order => order.status === this.selectedStatus);
     }
 
-    // Filter by search keyword
     if (this.searchKeyword) {
       const keyword = this.searchKeyword.toLowerCase();
       filtered = filtered.filter(order => 
         order.id.toString().includes(keyword) ||
-        order.userEmail.toLowerCase().includes(keyword) ||
-        order.shippingAddress.toLowerCase().includes(keyword)
+        (order.userName && order.userName.toLowerCase().includes(keyword)) ||
+        (order.shippingAddress && order.shippingAddress.toLowerCase().includes(keyword))
       );
     }
 

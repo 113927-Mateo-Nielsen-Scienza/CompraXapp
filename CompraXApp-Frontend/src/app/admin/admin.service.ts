@@ -6,7 +6,6 @@ import { environment } from '../../environments/environment';
 import { AuthService } from '../auth/auth.service';
 import { Router } from '@angular/router';
 
-// ✅ ALIAS PARA EVITAR CONFLICTOS
 export interface AdminPaymentDTO {
   id: number;
   orderId: number;
@@ -17,15 +16,13 @@ export interface AdminPaymentDTO {
   externalPaymentId?: string;
 }
 
-// ✅ EXPORT correcto para AdminPaymentsComponent usando export type
 export type { AdminPaymentDTO as PaymentDTO };
 
-// ✅ INTERFACES EXACTAS según backend
 export interface ProductSalesDTO {
-  productId: number;          // ✅ Long se convierte a number
+  productId: number;
   productName: string;
-  totalQuantitySold: number;  // ✅ long se convierte a number
-  totalRevenue: number;       // ✅ BigDecimal se convierte a number
+  totalQuantitySold: number;
+  totalRevenue: number;
   category?: string;
   averageRating?: number;
 }
@@ -48,27 +45,25 @@ export interface ProductSalesFilter {
   period?: 'week' | 'month' | '3months' | '6months' | 'year';
 }
 
-// ✅ CORREGIR: Interfaces que coincidan con tu backend
 export interface SalesReportDTO {
   period: string;
-  totalOrders: number;        // ✅ En tu backend es long, pero en TS es number
-  totalRevenue: number;       // ✅ BigDecimal se convierte a number
+  totalOrders: number;
+  totalRevenue: number;
   averageOrderValue: number;
-  periodStart: string;        // ✅ LocalDateTime se convierte a string ISO
+  periodStart: string;
   periodEnd: string;
 }
 
 export interface UserPurchaseStatisticsDTO {
-  userId: number;             // ✅ Long se convierte a number
+  userId: number;
   userName: string;
   userEmail: string;
-  totalOrders: number;        // ✅ long se convierte a number
-  totalSpent: number;         // ✅ BigDecimal se convierte a number
+  totalOrders: number;
+  totalSpent: number;
   averageOrderValue: number;
-  mostPurchasedProduct?: string; // ✅ Opcional según tu backend
+  mostPurchasedProduct?: string;
 }
 
-// ✅ AGREGAR: Interface faltante para NotificationDTO
 export interface NotificationDTO {
   id: number;
   userId: number;
@@ -81,7 +76,6 @@ export interface NotificationDTO {
   relatedEntityType?: string;
 }
 
-// ✅ AGREGAR: Interface para el summary que devuelve tu backend
 export interface ReportsSummary {
   productSales: ProductSalesDTO[];
   userStatistics: UserPurchaseStatisticsDTO[];
@@ -126,30 +120,25 @@ export class AdminService {
     private router: Router
   ) {}
 
-  // ✅ ENDPOINT EXACTO: GET /api/admin/payments/pending
   getPendingPayments(): Observable<AdminPaymentDTO[]> {
     return this.http.get<AdminPaymentDTO[]>(`${this.apiUrl}/admin/payments/pending`)
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  // ✅ ENDPOINT EXACTO: POST /api/admin/payments/{paymentId}/confirm
   confirmPayment(paymentId: number): Observable<any> {
     return this.http.post<any>(`${this.apiUrl}/admin/payments/${paymentId}/confirm`, {})
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  // Método para obtener estadísticas de productos
   getProductSalesStatistics(filter?: ProductSalesFilter): Observable<ProductSalesDTO[]> {
     let params = new HttpParams();
     
-    // Simplificar - no usar filtros complejos por ahora
     return this.http.get<ProductSalesDTO[]>(`${this.apiUrl}/admin/reports/product-sales`, {
       params,
       withCredentials: true
     }).pipe(catchError(this.handleError.bind(this)));
   }
 
-  // ✅ CORREGIR: Endpoints de reportes según tu backend
   getSalesReportForPeriod(days?: number, startDate?: Date, endDate?: Date): Observable<SalesReportDTO> {
     let params = new HttpParams();
     
@@ -182,14 +171,12 @@ export class AdminService {
     }).pipe(catchError(this.handleError.bind(this)));
   }
 
-  // ✅ CORREGIR: Summary según tu backend
   getReportsSummary(): Observable<ReportsSummary> {
     return this.http.get<ReportsSummary>(`${this.apiUrl}/admin/reports/summary`, {
       withCredentials: true
     }).pipe(catchError(this.handleError.bind(this)));
   }
 
-  // ⚠️ NEW: Notifications
   getNotifications(): Observable<NotificationDTO[]> {
     return this.http.get<NotificationDTO[]>(`${this.apiUrl}/notifications`, {
       withCredentials: true
@@ -220,7 +207,6 @@ export class AdminService {
     }).pipe(catchError(this.handleError.bind(this)));
   }
 
-  // ⚠️ NEW: Payment History and Receipts
   getMyPayments(): Observable<AdminPaymentDTO[]> {
     return this.http.get<AdminPaymentDTO[]>(`${this.apiUrl}/payments/my-payments`, {
       withCredentials: true
@@ -234,8 +220,6 @@ export class AdminService {
     }).pipe(catchError(this.handleError.bind(this)));
   }
 
-  // ✅ MÉTODOS QUE DEBEN USAR OTROS SERVICIOS
-  // Para usuarios - usar UserService
   getAllUsers(): Observable<UserDTO[]> {
     return this.http.get<UserDTO[]>(`${this.apiUrl}/users`)
       .pipe(catchError(this.handleError.bind(this)));
@@ -251,7 +235,11 @@ export class AdminService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  // Para productos - usar ProductService
+  toggleUserStatus(userId: number): Observable<{ message: string; active: boolean }> {
+    return this.http.put<{ message: string; active: boolean }>(`${this.apiUrl}/users/${userId}/toggle-status`, {})
+      .pipe(catchError(this.handleError.bind(this)));
+  }
+
   getAllProducts(keyword?: string, minPrice?: number, maxPrice?: number): Observable<any[]> {
     let params = new HttpParams();
     if (keyword) params = params.set('keyword', keyword);
@@ -277,7 +265,6 @@ export class AdminService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  // Para órdenes - usar OrderService
   getAllOrders(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/orders`)
       .pipe(catchError(this.handleError.bind(this)));
@@ -288,58 +275,48 @@ export class AdminService {
       .pipe(catchError(this.handleError.bind(this)));
   }
 
-  // ✅ AGREGAR: Métodos para gestión de promociones
-  
-  // Obtener todas las promociones
   getAllPromotions(): Observable<PromotionDTO[]> {
     return this.http.get<PromotionDTO[]>(`${this.apiUrl}/admin/promotions`, {
       withCredentials: true
     }).pipe(catchError(this.handleError.bind(this)));
   }
 
-  // Obtener promociones activas
   getActivePromotions(): Observable<PromotionDTO[]> {
     return this.http.get<PromotionDTO[]>(`${this.apiUrl}/admin/promotions/active`, {
       withCredentials: true
     }).pipe(catchError(this.handleError.bind(this)));
   }
 
-  // Obtener promoción por ID
   getPromotionById(id: number): Observable<PromotionDTO> {
     return this.http.get<PromotionDTO>(`${this.apiUrl}/admin/promotions/${id}`, {
       withCredentials: true
     }).pipe(catchError(this.handleError.bind(this)));
   }
 
-  // Crear nueva promoción
   createPromotion(promotion: PromotionCreateRequest): Observable<PromotionDTO> {
     return this.http.post<PromotionDTO>(`${this.apiUrl}/admin/promotions`, promotion, {
       withCredentials: true
     }).pipe(catchError(this.handleError.bind(this)));
   }
 
-  // Actualizar promoción
   updatePromotion(id: number, promotion: PromotionCreateRequest): Observable<PromotionDTO> {
     return this.http.put<PromotionDTO>(`${this.apiUrl}/admin/promotions/${id}`, promotion, {
       withCredentials: true
     }).pipe(catchError(this.handleError.bind(this)));
   }
 
-  // Eliminar promoción
   deletePromotion(id: number): Observable<{message: string}> {
     return this.http.delete<{message: string}>(`${this.apiUrl}/admin/promotions/${id}`, {
       withCredentials: true
     }).pipe(catchError(this.handleError.bind(this)));
   }
 
-  // Activar/Desactivar promoción
   togglePromotionStatus(id: number): Observable<PromotionDTO> {
     return this.http.patch<PromotionDTO>(`${this.apiUrl}/admin/promotions/${id}/toggle`, {}, {
       withCredentials: true
     }).pipe(catchError(this.handleError.bind(this)));
   }
 
-  // Enviar promoción a todos los usuarios
   sendPromotionToAllUsers(id: number): Observable<{message: string}> {
     return this.http.post<{message: string}>(`${this.apiUrl}/admin/promotions/${id}/send`, {}, {
       withCredentials: true

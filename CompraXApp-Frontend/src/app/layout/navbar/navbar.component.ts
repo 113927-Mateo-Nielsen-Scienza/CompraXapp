@@ -17,7 +17,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
   cartItemCount: number = 0;
   mobileMenuOpen = false;
   isUserMenuOpen = false;
-  // ✅ REMOVER mobileNotificationCount hasta que funcione correctamente
   private authSubscription: Subscription | undefined;
   private cartSubscription: Subscription | undefined;
 
@@ -33,7 +32,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
       if (user) {
         this.loadCartInfo();
         this.loadUser();
-        // ✅ REMOVER loadNotificationCount() temporalmente
       } else {
         this.cartItemCount = 0;
       }

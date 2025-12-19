@@ -19,10 +19,10 @@ export interface ProductWithPromotion {
   name: string;
   description: string;
   price: number;
-  originalPrice: number; // ✅ Nuevo
-  discountPercentage?: number; // ✅ Nuevo
-  hasPromotion: boolean; // ✅ Nuevo
-  promotionTitle?: string; // ✅ Nuevo
+  originalPrice: number;
+  discountPercentage?: number;
+  hasPromotion: boolean;
+  promotionTitle?: string;
   stockQuantity: number;
   imageUrl?: string;
   active: boolean;
@@ -40,7 +40,6 @@ export class PromotionService {
     this.loadActivePromotions();
   }
 
-  // ✅ Obtener promociones activas (endpoint público)
   getActivePromotions(): Observable<ActivePromotionDTO[]> {
     return this.http.get<ActivePromotionDTO[]>(`${this.apiUrl}/promotions/active`).pipe(
       tap(promotions => {
@@ -50,7 +49,6 @@ export class PromotionService {
     );
   }
 
-  // ✅ Cargar promociones activas
   loadActivePromotions(): void {
     this.getActivePromotions().subscribe({
       next: (promotions) => {
@@ -63,7 +61,6 @@ export class PromotionService {
     });
   }
 
-  // ✅ Aplicar promociones a un producto
   applyPromotionToProduct(product: any): ProductWithPromotion {
     const activePromotions = this.activePromotionsSubject.value;
     
@@ -75,8 +72,6 @@ export class PromotionService {
       };
     }
 
-    // Por simplicidad, aplicamos la primera promoción activa
-    // En un sistema más complejo, podrías tener promociones específicas por producto/categoría
     const promotion = activePromotions[0];
     const discountAmount = (product.price * promotion.discountPercentage) / 100;
     const discountedPrice = product.price - discountAmount;
@@ -91,12 +86,10 @@ export class PromotionService {
     };
   }
 
-  // ✅ Aplicar promociones a lista de productos
   applyPromotionsToProducts(products: any[]): ProductWithPromotion[] {
     return products.map(product => this.applyPromotionToProduct(product));
   }
 
-  // ✅ Obtener descuento máximo disponible
   getMaxDiscount(): number {
     const activePromotions = this.activePromotionsSubject.value;
     if (activePromotions.length === 0) return 0;
@@ -104,7 +97,6 @@ export class PromotionService {
     return Math.max(...activePromotions.map(p => p.discountPercentage));
   }
 
-  // ✅ Verificar si hay promociones activas
   hasActivePromotions(): boolean {
     return this.activePromotionsSubject.value.length > 0;
   }

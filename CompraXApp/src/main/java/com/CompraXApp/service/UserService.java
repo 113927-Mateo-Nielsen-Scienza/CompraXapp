@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
+@SuppressWarnings("null")
 public class UserService {
 
     @Autowired
@@ -156,6 +157,23 @@ public class UserService {
     }
 
     /**
+     * Activar/Desactivar usuario (toggle status)
+     */
+    @Transactional
+    public User toggleUserStatus(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+        
+        // Si está activo y es admin, verificar que no sea el último
+        if (user.isActive() && isLastAdmin(userId)) {
+            throw new RuntimeException("Cannot deactivate the last administrator account.");
+        }
+        
+        user.setActive(!user.isActive());
+        return userRepository.save(user);
+    }
+
+    /**
      * Actualizar roles con validaciones de seguridad - MÉTODO ÚNICO
      */
     @Transactional
@@ -193,30 +211,34 @@ public class UserService {
         User user = userRepository.findByEmail(resetRequest.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con email: " + resetRequest.getEmail()));
 
-        user.generatePasswordResetToken();
+        // Generar código de 6 dígitos en lugar de token UUID
+        String resetCode = String.format("%06d", new java.util.Random().nextInt(999999));
+        user.setPasswordResetToken(resetCode);
+        user.setPasswordResetTokenExpiry(LocalDateTime.now().plusMinutes(15)); // 15 minutos
         userRepository.save(user);
-
-        String resetUrl = frontendBaseUrl + resetPasswordPath + "?token=" + user.getPasswordResetToken();
 
         emailService.sendPasswordResetEmail(
                 user.getEmail(),
-                "Recuperación de contraseña",
-                "Para restablecer tu contraseña, haz clic en el siguiente enlace: " + resetUrl
+                "Código de recuperación de contraseña - CompraXApp",
+                "Tu código de recuperación es: " + resetCode + "\n\nEste código expira en 15 minutos."
         );
     }
 
-    public void resetPassword(String token, String newPassword) {
-        User user = userRepository.findByPasswordResetToken(token)
-                .orElseThrow(() -> new RuntimeException("Token inválido"));
+    public void resetPasswordWithCode(String email, String code, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        if (user.getPasswordResetToken() == null || !user.getPasswordResetToken().equals(code)) {
+            throw new RuntimeException("Código inválido");
+        }
 
         if (!user.isPasswordResetTokenValid()) {
-            throw new RuntimeException("El token ha expirado");
+            throw new RuntimeException("El código ha expirado");
         }
 
         user.setPassword(encoder.encode(newPassword));
         user.setPasswordResetToken(null);
         user.setPasswordResetTokenExpiry(null);
-
         userRepository.save(user);
     }
 

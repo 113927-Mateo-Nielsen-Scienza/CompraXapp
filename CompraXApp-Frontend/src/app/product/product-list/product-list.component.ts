@@ -2,9 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { ProductService, ProductResponse } from '../product.service'; // ✅ Usar ProductResponse
+import { ProductService, ProductResponse } from '../product.service';
 import { CartService } from '../../cart/cart.service';
-import { AuthService, LoginResponse } from '../../auth/auth.service'; // ✅ Usar LoginResponse
+import { AuthService, LoginResponse } from '../../auth/auth.service';
 import { Product } from '../../models/Product';
 import { PromotionService, ProductWithPromotion } from '../../services/promotion.service';
 
@@ -16,8 +16,8 @@ import { PromotionService, ProductWithPromotion } from '../../services/promotion
   styleUrl: './product-list.component.css'
 })
 export class ProductListComponent implements OnInit {
-  products: ProductWithPromotion[] = []; // ✅ Cambiar tipo
-  allProducts: ProductWithPromotion[] = []; // ✅ Cambiar tipo
+  products: ProductWithPromotion[] = [];
+  allProducts: ProductWithPromotion[] = [];
   isLoading = true;
   currentUser: LoginResponse | null = null;
   viewMode: 'grid' | 'list' = 'grid';
@@ -30,7 +30,7 @@ export class ProductListComponent implements OnInit {
     private cartService: CartService,
     private authService: AuthService,
     private router: Router,
-    private promotionService: PromotionService // ✅ Inyectar
+    private promotionService: PromotionService
   ) { }
 
   ngOnInit(): void {
@@ -39,7 +39,6 @@ export class ProductListComponent implements OnInit {
       this.currentUser = user;
     });
 
-    // ✅ Escuchar cambios en promociones
     this.promotionService.activePromotions$.subscribe(promotions => {
       if (promotions.length > 0 && this.allProducts.length > 0) {
         this.refreshProductsWithPromotions();
@@ -47,7 +46,6 @@ export class ProductListComponent implements OnInit {
     });
   }
 
-  // ✅ NUEVO: Refrescar productos cuando cambien las promociones
   refreshProductsWithPromotions(): void {
     this.products = this.promotionService.applyPromotionsToProducts(this.allProducts);
     this.filterProducts();
@@ -71,7 +69,6 @@ export class ProductListComponent implements OnInit {
       });
   }
 
-  // ✅ ACTUALIZAR: Filtrar productos considerando precio con descuento
   filterProducts(): void {
     let filtered = this.allProducts;
     
@@ -83,7 +80,6 @@ export class ProductListComponent implements OnInit {
       );
     }
 
-    // ✅ Usar precio con descuento para filtros
     if (this.minPrice !== undefined && this.minPrice !== null && this.minPrice > 0) {
       filtered = filtered.filter(product => product.price >= this.minPrice!);
     }
@@ -120,7 +116,6 @@ export class ProductListComponent implements OnInit {
       return;
     }
 
-    // ✅ Usar método corregido
     this.cartService.addItemToCart(product.id, quantity).subscribe({
       next: (cart) => {
         console.log('Product added to cart successfully');

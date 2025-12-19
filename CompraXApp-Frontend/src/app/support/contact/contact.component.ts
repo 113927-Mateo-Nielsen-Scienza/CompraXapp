@@ -21,8 +21,8 @@ export class ContactComponent {
       icon: '📧',
       title: 'Email Support',
       description: 'Get help via email within 24 hours',
-      contact: 'compraxapp@gmail.com',  // ✅ Email correcto actualizado
-      link: 'mailto:compraxapp@gmail.com'  // ✅ Link correcto actualizado
+      contact: 'compraxapp@gmail.com',
+      link: 'mailto:compraxapp@gmail.com'
     },
     {
       icon: '📞',

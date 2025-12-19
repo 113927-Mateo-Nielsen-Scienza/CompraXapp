@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { AdminService, PaymentDTO as AdminPaymentDTO } from '../admin.service'; // ✅ Usar alias
+import { AdminService, PaymentDTO as AdminPaymentDTO } from '../admin.service';
 
 @Component({
   selector: 'app-admin-payments',

@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { PromotionService, ProductWithPromotion } from '../services/promotion.service';
 import { map } from 'rxjs/operators';
-// ✅ INTERFACES EXACTAS según backend
+
 export interface ProductResponse {
   id: number;
   name: string;
@@ -32,10 +32,9 @@ export class ProductService {
 
   constructor(
     private http: HttpClient,
-    private promotionService: PromotionService // ✅ Inyectar PromotionService
+    private promotionService: PromotionService
   ) { }
 
-  // ✅ ENDPOINT EXACTO: GET /api/products (PÚBLICO)
   getProducts(keyword?: string, minPrice?: number, maxPrice?: number): Observable<ProductWithPromotion[]> {
     let params = new HttpParams();
     if (keyword) params = params.set('keyword', keyword);
@@ -47,14 +46,12 @@ export class ProductService {
     );
   }
 
-  // ✅ ENDPOINT EXACTO: GET /api/products/{id} (PÚBLICO)
   getProductById(id: number): Observable<ProductWithPromotion> {
     return this.http.get<ProductResponse>(`${this.apiUrl}/${id}`).pipe(
       map(product => this.promotionService.applyPromotionToProduct(product))
     );
   }
 
-  // ✅ MÉTODOS ADMIN - endpoints exactos
   createProduct(productData: ProductCreateRequest): Observable<ProductResponse> {
     return this.http.post<ProductResponse>(this.apiUrl, productData);
   }

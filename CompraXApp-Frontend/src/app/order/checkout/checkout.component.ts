@@ -28,7 +28,6 @@ export class CheckoutComponent implements OnInit {
     private authService: AuthService,
     private router: Router
   ) {
-    // ✅ SOLO campo shippingAddress según documentación backend
     this.checkoutForm = this.fb.group({
       shippingAddress: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(500)]]
     });
@@ -109,7 +108,6 @@ export class CheckoutComponent implements OnInit {
     this.isSubmitting = true;
     this.errorMessage = '';
 
-    // ✅ ESTRUCTURA EXACTA del backend
     const checkoutData = {
       shippingAddress: this.checkoutForm.value.shippingAddress.trim()
     };

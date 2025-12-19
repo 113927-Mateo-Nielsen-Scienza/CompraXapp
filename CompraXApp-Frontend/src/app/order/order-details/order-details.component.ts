@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OrderService } from '../order.service';
 import { AuthService } from '../../auth/auth.service';
-import { ProductService } from '../../product/product.service'; // ✅ AGREGAR
+import { ProductService } from '../../product/product.service';
 
 interface OrderItem {
   id: number;
@@ -43,7 +43,7 @@ export class OrderDetailsComponent implements OnInit {
     private router: Router,
     private orderService: OrderService,
     private authService: AuthService,
-    private productService: ProductService // ✅ AGREGAR
+    private productService: ProductService
   ) {}
 
   ngOnInit(): void {
@@ -71,14 +71,12 @@ export class OrderDetailsComponent implements OnInit {
     
     this.orderService.getOrderById(this.orderId).subscribe({
       next: (response) => {
-        console.log('🔍 Order response from backend:', response); // ✅ DEBUG
+        console.log('🔍 Order response from backend:', response);
         
-        // ✅ FIX: Adaptar la respuesta del backend
         this.order = this.adaptOrderData(response);
         
-        console.log('🔍 Adapted order data:', this.order); // ✅ DEBUG
+        console.log('🔍 Adapted order data:', this.order);
         
-        // ✅ CARGAR IMÁGENES REALES DESPUÉS DE OBTENER EL ORDER
         this.loadProductImages();
       },
       error: (err) => {
@@ -89,7 +87,6 @@ export class OrderDetailsComponent implements OnInit {
     });
   }
 
-  // ✅ NUEVO: Cargar imágenes reales de productos
   private loadProductImages(): void {
     if (!this.order?.items || this.order.items.length === 0) {
       this.loading = false;
@@ -129,11 +126,9 @@ export class OrderDetailsComponent implements OnInit {
     });
   }
 
-  // ✅ NUEVO: Adaptar datos del backend a la estructura esperada
   private adaptOrderData(backendData: any): Order {
     console.log('🔍 Raw backend data:', backendData);
 
-    // ✅ FIX: Adaptar estructura dependiendo de cómo llegan los datos
     const order: Order = {
       id: backendData.id || 0,
       userId: backendData.userId || backendData.user_id || 0,
@@ -149,7 +144,6 @@ export class OrderDetailsComponent implements OnInit {
     return order;
   }
 
-  // ✅ NUEVO: Adaptar items del pedido
   private adaptOrderItems(backendItems: any[]): OrderItem[] {
     console.log('🔍 Raw backend items:', backendItems);
 
@@ -167,7 +161,7 @@ export class OrderDetailsComponent implements OnInit {
         productName: item.productName || item.product_name || item.name || `Product ${index + 1}`,
         quantity: this.parseQuantity(item.quantity || item.qty || 1),
         pricePerUnit: this.parsePrice(item.pricePerUnit || item.price_per_unit || item.price || item.unitPrice || 0),
-        imageUrl: 'assets/default-product.png' // ✅ Inicializar con imagen por defecto
+        imageUrl: 'assets/default-product.png'
       };
 
       console.log(`🔍 Adapted item ${index}:`, adaptedItem);
@@ -178,7 +172,6 @@ export class OrderDetailsComponent implements OnInit {
     return adaptedItems;
   }
 
-  // ✅ NUEVO: Parse seguro de precios
   private parsePrice(value: any): number {
     if (typeof value === 'number') return value;
     if (typeof value === 'string') {
@@ -190,7 +183,6 @@ export class OrderDetailsComponent implements OnInit {
     return 0;
   }
 
-  // ✅ NUEVO: Parse seguro de cantidad
   private parseQuantity(value: any): number {
     if (typeof value === 'number') return Math.max(1, Math.floor(value));
     if (typeof value === 'string') {
@@ -200,14 +192,12 @@ export class OrderDetailsComponent implements OnInit {
     return 1;
   }
 
-  // ✅ FIX: Obtener imagen del producto con fallback múltiple
   getProductImageUrl(item: OrderItem): string {
     const imageUrl = item.imageUrl || 'assets/default-product.png';
     console.log(`🔍 Image URL for ${item.productName}:`, imageUrl);
     return imageUrl;
   }
 
-  // ✅ FIX: Manejo de error de imagen
   onImageError(event: any): void {
     const target = event.target as HTMLImageElement;
     if (target) {
@@ -216,7 +206,6 @@ export class OrderDetailsComponent implements OnInit {
     }
   }
 
-  // ✅ FIX: Calcular subtotal con debugging
   getSubtotal(): number {
     if (!this.order?.items) {
       console.log('🔍 No items for subtotal calculation');
@@ -233,7 +222,6 @@ export class OrderDetailsComponent implements OnInit {
     return subtotal;
   }
 
-  // ✅ FIX: Obtener total del item con debugging
   getItemTotal(item: OrderItem): number {
     const total = (item.quantity || 0) * (item.pricePerUnit || 0);
     console.log(`🔍 Item total for ${item.productName}: ${item.quantity} x $${item.pricePerUnit} = $${total}`);
@@ -247,10 +235,9 @@ export class OrderDetailsComponent implements OnInit {
 
   // Verificar si se puede cancelar el pedido
   canCancelOrder(): boolean {
-    return this.order?.status === 'PENDING' || this.order?.status === 'CONFIRMED';
+    return this.order?.status === 'PENDING';
   }
 
-  // ✅ AGREGAR: Método faltante cancelOrder
   cancelOrder(): void {
     if (!this.order) return;
     
@@ -258,40 +245,26 @@ export class OrderDetailsComponent implements OnInit {
     
     if (confirmation) {
       this.loading = true;
-      // TODO: Implementar cancelación en el backend
-      console.log('Cancelling order:', this.order.id);
       
-      // Simulación por ahora - reemplazar con llamada real al backend
-      setTimeout(() => {
-        if (this.order) {
-          this.order.status = 'CANCELLED';
-        }
-        this.loading = false;
-        alert('Pedido cancelado exitosamente');
-      }, 1000);
-      
-      // ✅ IMPLEMENTACIÓN REAL cuando el backend tenga el endpoint:
-      /*
       this.orderService.cancelOrder(this.order.id).subscribe({
-        next: (updatedOrder) => {
-          this.order = updatedOrder;
+        next: () => {
+          if (this.order) {
+            this.order.status = 'CANCELLED';
+          }
           this.loading = false;
           alert('Pedido cancelado exitosamente');
         },
         error: (error) => {
           this.loading = false;
           console.error('Error cancelling order:', error);
-          alert('Error al cancelar el pedido. Inténtalo de nuevo.');
+          alert(error.message || 'Error al cancelar el pedido. Inténtalo de nuevo.');
         }
       });
-      */
     }
   }
 
-  // ✅ MEJORAR: downloadInvoice method para usar PDF
   downloadInvoice(): void {
     if (this.order) {
-      // ✅ Usar el nuevo método de PDF
       this.orderService.generateReceiptPDF(this.order.id).then(() => {
         console.log('Invoice downloaded successfully');
       }).catch(error => {
@@ -301,7 +274,6 @@ export class OrderDetailsComponent implements OnInit {
     }
   }
 
-  // ✅ AGREGAR: Ver comprobante method
   viewReceipt(): void {
     if (this.order) {
       this.orderService.getReceipt(this.order.id).subscribe({

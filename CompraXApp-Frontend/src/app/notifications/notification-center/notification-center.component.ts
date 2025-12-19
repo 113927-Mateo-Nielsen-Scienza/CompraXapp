@@ -67,7 +67,6 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
       this.markAsRead(notification.id);
     }
 
-    // ✅ CORREGIR: Usar relatedOrderId para navegación
     if (notification.actionUrl) {
       this.router.navigate([notification.actionUrl]);
     } else if (notification.relatedOrderId) {
@@ -138,7 +137,6 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
 
   getTimeAgo(dateInput: Date | string): string {
     try {
-      // ✅ MANEJAR tanto Date como string
       const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
       
       if (isNaN(date.getTime())) {

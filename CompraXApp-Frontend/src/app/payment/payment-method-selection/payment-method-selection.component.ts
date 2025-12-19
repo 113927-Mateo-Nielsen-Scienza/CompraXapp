@@ -45,7 +45,6 @@ export class PaymentMethodSelectionComponent implements OnInit {
 
   loadCartData(): void {
     const cart = this.cartService.getCurrentCartValue();
-    // ✅ USAR datos correctos del carrito
     this.cartItems = cart?.items || [];
     this.total = cart?.totalAmount || 0;
   }

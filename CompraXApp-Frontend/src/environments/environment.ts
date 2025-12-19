@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8080/api'  // ✅ Sin barra final
+  apiUrl: 'http://localhost:8080/api'
 };

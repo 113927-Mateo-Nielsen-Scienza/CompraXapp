@@ -8,7 +8,6 @@ import { OrderHistoryComponent } from './user/order-history/order-history.compon
 import { OrderDetailsComponent } from './order/order-details/order-details.component';
 
 export const routes: Routes = [
-  // ✅ Módulos principales SIN guards - Spring Security maneja todo
   {
     path: 'auth',
     loadChildren: () => import('./auth/auth.module').then(m => m.AuthModule)
@@ -20,29 +19,23 @@ export const routes: Routes = [
   {
     path: 'cart',
     loadChildren: () => import('./cart/cart.module').then(m => m.CartModule)
-    // ✅ SIN canActivate - Spring Security maneja la autorización
   },
   {
     path: 'order',
     loadChildren: () => import('./order/order.module').then(m => m.OrderModule)
-    // ✅ SIN canActivate - Spring Security maneja la autorización
   },
   {
     path: 'admin',
     loadChildren: () => import('./admin/admin.module').then(m => m.AdminModule)
-    // ✅ SIN canActivate - Spring Security maneja la autorización
   },
   {
     path: 'user',
     loadChildren: () => import('./user/user.module').then(m => m.UserModule)
-    // ✅ SIN canActivate - Spring Security maneja la autorización
   },
 
-  // ✅ Rutas específicas SIN guards
   {
     path: 'payment/method-selection',
     component: PaymentMethodSelectionComponent
-    // ✅ SIN canActivate - El backend rechaza si no hay sesión
   },
   {
     path: 'payment/mercadopago',
@@ -57,7 +50,6 @@ export const routes: Routes = [
     component: PaymentSuccessComponent
   },
 
-  // ✅ Rutas de órdenes SIN guards
   {
     path: 'order/confirmation/:id',
     component: OrderConfirmationComponent
@@ -71,13 +63,11 @@ export const routes: Routes = [
     component: OrderDetailsComponent
   },
 
-  // ✅ Rutas administrativas SIN guards
   {
     path: 'admin/payments',
     loadComponent: () => import('./admin/admin-payments/admin-payments.component').then(m => m.AdminPaymentsComponent)
   },
 
-  // ✅ Páginas legales y ayuda (públicas)
   {
     path: 'terms',
     loadComponent: () => import('./legal/terms-of-service/terms-of-service.component').then(c => c.TermsOfServiceComponent)

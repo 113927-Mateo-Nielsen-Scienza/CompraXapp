@@ -207,6 +207,60 @@
   100% { transform: rotate(360deg); }
 }
 
+/* Forgot password link */
+.forgot-password-link {
+  text-align: center;
+  margin-top: var(--spacing-4);
+}
+
+.forgot-password-link a {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+
+.forgot-password-link a:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+/* Password toggle */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  flex: 1;
+  padding-right: 45px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  color: var(--gray-400);
+  transition: color var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggle-password:hover {
+  color: var(--gray-600);
+}
+
+.toggle-password svg {
+  width: 20px;
+  height: 20px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .auth-wrapper {

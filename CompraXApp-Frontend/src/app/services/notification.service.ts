@@ -5,16 +5,15 @@ import { environment } from '../../environments/environment';
 import { AuthService } from '../auth/auth.service';
 import { tap } from 'rxjs/operators';
 
-// ✅ CORREGIR la interface Notification según documentación del backend
 export interface Notification {
   id: number;
   type: 'ORDER_CREATED' | 'PAYMENT_CONFIRMED' | 'ORDER_SHIPPED' | 'ORDER_DELIVERED' | 'PROMOTION';
   title: string;
   message: string;
   read: boolean;
-  createdAt: Date | string; // ✅ Permitir tanto Date como string
-  relatedOrderId?: number; // ✅ USAR relatedOrderId según backend
-  actionUrl?: string; // ✅ AGREGAR para navegación
+  createdAt: Date | string;
+  relatedOrderId?: number;
+  actionUrl?: string;
 }
 
 @Injectable({
@@ -28,7 +27,6 @@ export class NotificationService implements OnDestroy {
 
   constructor(private http: HttpClient) {}
 
-  // ✅ ENDPOINT EXACTO: GET /api/notifications
   getAllNotifications(): Observable<Notification[]> {
     return this.http.get<Notification[]>(this.apiUrl, {
       withCredentials: true
@@ -42,35 +40,30 @@ export class NotificationService implements OnDestroy {
     return this.getAllNotifications();
   }
 
-  // ✅ ENDPOINT EXACTO: GET /api/notifications/unread
   getUnreadNotifications(): Observable<Notification[]> {
     return this.http.get<Notification[]>(`${this.apiUrl}/unread`, {
       withCredentials: true
     });
   }
 
-  // ✅ ENDPOINT EXACTO: GET /api/notifications/unread/count
   getUnreadCount(): Observable<{unreadCount: number}> {
     return this.http.get<{unreadCount: number}>(`${this.apiUrl}/unread/count`, {
       withCredentials: true
     });
   }
 
-  // ✅ ENDPOINT EXACTO: PUT /api/notifications/{notificationId}/read
   markAsRead(notificationId: number): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${notificationId}/read`, {}, {
       withCredentials: true
     });
   }
 
-  // ✅ ENDPOINT EXACTO: PUT /api/notifications/read-all
   markAllAsRead(): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/read-all`, {}, {
       withCredentials: true
     });
   }
 
-  // ✅ AGREGAR método para eliminar notificación (aunque no esté en backend)
   deleteNotification(notificationId: number): Observable<void> {
     // Simulación local ya que no existe en backend
     return new Observable(observer => {

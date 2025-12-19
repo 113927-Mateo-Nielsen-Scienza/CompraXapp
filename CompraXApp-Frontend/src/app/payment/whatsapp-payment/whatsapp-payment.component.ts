@@ -35,7 +35,6 @@ export class WhatsappPaymentComponent implements OnInit {
     const cart = this.cartService.getCurrentCartValue();
     const user = this.authService.getCurrentUser();
     
-    // ✅ USAR datos correctos del carrito
     this.orderData = {
       items: cart?.items || [],
       total: cart?.totalAmount || 0,
@@ -56,7 +55,6 @@ export class WhatsappPaymentComponent implements OnInit {
 
     const parsedCheckoutData = JSON.parse(checkoutData);
 
-    // ✅ USAR estructura exacta del backend
     const orderData = {
       shippingAddress: parsedCheckoutData.shippingAddress || 'Coordinar por WhatsApp'
     };

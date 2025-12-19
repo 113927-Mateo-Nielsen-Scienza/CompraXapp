@@ -26,7 +26,6 @@ export class NotificationDropdownComponent implements OnInit {
     this.loadUnreadCount();
   }
 
-  // ✅ AGREGAR: Cerrar dropdown al hacer click fuera
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: Event): void {
     const target = event.target as HTMLElement;
@@ -106,7 +105,6 @@ export class NotificationDropdownComponent implements OnInit {
 
   getIcon(type: string): string {
     const icons = this.notificationService.getNotificationIcon(type);
-    // ✅ CORREGIR: Usar iconos de FontAwesome
     switch (type) {
       case 'ORDER_CREATED': return 'shopping-cart';
       case 'PAYMENT_CONFIRMED': return 'credit-card';
@@ -155,7 +153,6 @@ export class NotificationDropdownComponent implements OnInit {
     this.closeDropdown();
   }
 
-  // ✅ AGREGAR: TrackBy function para mejor performance
   trackByNotificationId(index: number, notification: Notification): number {
     return notification.id;
   }

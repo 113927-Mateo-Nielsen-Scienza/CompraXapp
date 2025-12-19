@@ -141,6 +141,29 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
+    // ✅ NUEVO: Activar/Desactivar usuario (soft delete toggle)
+    @PutMapping("/{id}/toggle-status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> toggleUserStatus(@PathVariable Long id,
+                                              @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        // No permitir desactivarse a sí mismo
+        if (currentUser.getId().equals(id)) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "Cannot change your own status"));
+        }
+        
+        try {
+            User user = userService.toggleUserStatus(id);
+            return ResponseEntity.ok(Map.of(
+                "message", user.isActive() ? "User activated successfully" : "User deactivated successfully",
+                "active", user.isActive()
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
     // ✅ MEJORADO: Validar antes de actualizar roles
     @PutMapping("/{id}/roles")
     @PreAuthorize("hasRole('ADMIN')")

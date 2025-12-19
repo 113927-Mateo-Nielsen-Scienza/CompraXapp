@@ -1,9 +1,8 @@
 .success-container {
   max-width: 600px;
   margin: 0 auto;
-  padding: var(--spacing-6);
-  background: var(--gray-50);
-  min-height: 100vh;
+  padding: 2rem;
+  min-height: calc(100vh - 80px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -11,12 +10,14 @@
 
 .success-card {
   background: white;
-  border-radius: var(--border-radius-xl);
-  box-shadow: var(--shadow-xl);
-  padding: var(--spacing-8);
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  padding: 3rem;
   text-align: center;
   position: relative;
   overflow: hidden;
+  width: 100%;
+  max-width: 500px;
 }
 
 .success-card::before {
@@ -26,25 +27,28 @@
   left: 0;
   right: 0;
   height: 6px;
-  background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+  background: linear-gradient(90deg, #10b981, #2563eb);
 }
 
 .success-icon {
-  width: 120px;
-  height: 120px;
-  background: linear-gradient(135deg, var(--secondary-color), var(--secondary-dark));
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, #10b981, #059669);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto var(--spacing-6) auto;
-  font-size: 4rem;
+  margin: 0 auto 1.5rem auto;
+  font-size: 3rem;
   animation: success-bounce 0.8s ease-out;
   position: relative;
 }
 
 .success-icon::before {
-  content: '✅';
+  content: '✓';
+  color: white;
+  font-size: 3rem;
+  font-weight: bold;
   animation: success-checkmark 1.2s ease-out 0.2s both;
 }
 
@@ -74,19 +78,93 @@
 }
 
 .success-title {
-  font-size: var(--font-size-2xl);
+  font-size: 1.75rem;
   font-weight: 700;
-  color: var(--gray-900);
-  margin: 0 0 var(--spacing-4) 0;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
   animation: fade-in-up 0.8s ease-out 0.4s both;
 }
 
 .success-message {
-  font-size: var(--font-size-lg);
-  color: var(--gray-600);
-  margin: 0 0 var(--spacing-8) 0;
+  font-size: 1.1rem;
+  color: #6b7280;
+  margin: 0 0 2rem 0;
   line-height: 1.6;
   animation: fade-in-up 0.8s ease-out 0.6s both;
+}
+
+.order-info {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  animation: fade-in-up 0.8s ease-out 0.8s both;
+}
+
+.order-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.order-detail:not(:last-child) {
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 0.5rem;
+}
+
+.detail-label {
+  color: #6b7280;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.detail-value {
+  color: #111827;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.success-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  animation: fade-in-up 0.8s ease-out 1s both;
+}
+
+.success-actions .btn {
+  padding: 0.875rem 1.5rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: none;
+}
+
+.success-actions .btn-primary {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+}
+
+.success-actions .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+}
+
+.success-actions .btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 2px solid #e5e7eb;
+}
+
+.success-actions .btn-secondary:hover {
+  background: #e5e7eb;
+  transform: translateY(-1px);
 }
 
 @keyframes fade-in-up {

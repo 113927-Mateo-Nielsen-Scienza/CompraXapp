@@ -68,11 +68,23 @@ public class OrderController {
         return ResponseEntity.ok(order);
     }
 
+    // ✅ ADMIN puede cancelar cualquier orden
     @PatchMapping("/{orderId}/cancel")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> cancelOrder(@PathVariable Long orderId) {
-        orderService.cancelOrderAsAdmin(orderId);
-        return ResponseEntity.noContent().build();
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+    public ResponseEntity<?> cancelOrder(@PathVariable Long orderId,
+                                         @AuthenticationPrincipal UserDetailsImpl currentUser) {
+        try {
+            // Si es USER, verificar que sea su propia orden
+            if (currentUser.getAuthorities().stream()
+                    .noneMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+                orderService.cancelOrderAsUser(orderId, currentUser.getId());
+            } else {
+                orderService.cancelOrderAsAdmin(orderId);
+            }
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     @PostMapping("/{orderId}/whatsapp-payment")

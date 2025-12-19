@@ -15,7 +15,7 @@ import { PromotionService, ProductWithPromotion } from '../../services/promotion
   styleUrl: './product-detail.component.css'
 })
 export class ProductDetailComponent implements OnInit {
-  product: ProductWithPromotion | null = null; // ✅ Cambiar tipo
+  product: ProductWithPromotion | null = null;
   quantity: number = 1;
   isLoading = true;
   isLoggedIn = false;
@@ -27,7 +27,7 @@ export class ProductDetailComponent implements OnInit {
     private productService: ProductService,
     private cartService: CartService,
     private authService: AuthService,
-    private promotionService: PromotionService // ✅ Inyectar
+    private promotionService: PromotionService
   ) {}
 
   ngOnInit(): void {
@@ -43,7 +43,6 @@ export class ProductDetailComponent implements OnInit {
       this.isLoggedIn = !!user;
     });
 
-    // ✅ Escuchar cambios en promociones
     this.promotionService.activePromotions$.subscribe(promotions => {
       if (promotions.length > 0 && this.product) {
         this.refreshProductWithPromotions();
@@ -51,7 +50,6 @@ export class ProductDetailComponent implements OnInit {
     });
   }
 
-  // ✅ NUEVO: Refrescar producto con promociones
   refreshProductWithPromotions(): void {
     if (this.product) {
       this.product = this.promotionService.applyPromotionToProduct(this.product);
@@ -75,7 +73,6 @@ export class ProductDetailComponent implements OnInit {
     });
   }
 
-  // ✅ ACTUALIZAR: Agregar al carrito con precio promocional
   addToCart(): void {
     if (!this.product) return;
     
@@ -92,7 +89,6 @@ export class ProductDetailComponent implements OnInit {
       },
       error: (error) => {
         console.error('❌ Error adding to cart:', error);
-        // ✅ TRANSLATE: Show error notification in English
         alert('Error adding product to cart. Please try again.');
       }
     });

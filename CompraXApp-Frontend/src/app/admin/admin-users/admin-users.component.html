@@ -95,12 +95,13 @@
                 </button>
               </div>
               
-              <!-- Delete User Button -->
-              <button class="btn btn-sm btn-danger" 
-                      (click)="deleteUser(user)"
-                      [disabled]="isCurrentUser(user)"
-                      title="Delete User">
-                🗑️ Delete
+              <!-- Activate/Deactivate User Button -->
+              <button *ngIf="!isCurrentUser(user)"
+                      class="btn btn-sm"
+                      [ngClass]="user.active ? 'btn-danger' : 'btn-success'"
+                      (click)="toggleUserStatus(user)"
+                      [title]="user.active ? 'Deactivate User' : 'Activate User'">
+                {{ user.active ? '🚫 Deactivate' : '✅ Activate' }}
               </button>
             </td>
           </tr>

@@ -28,12 +28,11 @@ export class OrderHistoryComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
-  // ✅ CAMBIAR: Hacer router público para el template
   constructor(
     private orderService: OrderService,
     private userService: UserService,
     private authService: AuthService,
-    public router: Router // ✅ CAMBIAR: private -> public
+    public router: Router
   ) {}
 
   ngOnInit(): void {
@@ -73,9 +72,7 @@ export class OrderHistoryComponent implements OnInit {
     });
   }
 
-  // ✅ AGREGAR estos métodos al final del componente
 
-  // ✅ TrackBy functions para mejor performance
   trackByOrderId(index: number, order: OrderDTO): number {
     return order.id;
   }
@@ -84,21 +81,17 @@ export class OrderHistoryComponent implements OnInit {
     return item.id || index;
   }
 
-  // ✅ MEJORAR: Proceso de orders para manejar datos del backend específico
   private processOrders(orders: OrderDTO[]): OrderDTO[] {
     console.log('🔍 Processing orders:', orders);
     
     return orders.map(order => {
       console.log(`🔍 Processing order ${order.id}:`, order);
       
-      // ✅ FIX: Process items with better null handling and proper typing
       const processedItems = (order.items || []).map((item, index) => {
         console.log(`🔍 Raw item data:`, item);
         
-        // ✅ Cast to any for field access or create a more flexible approach
         const itemData = item as any;
         
-        // ✅ SEARCH for price in multiple possible fields with null checks
         const possiblePriceFields = [
           'pricePerUnit', 'price_per_unit', 'unitPrice', 'unit_price', 
           'price', 'cost', 'amount', 'productPrice', 'product_price'
@@ -116,7 +109,6 @@ export class OrderHistoryComponent implements OnInit {
           }
         }
         
-        // ✅ If no price found, calculate from order total
         if (foundPrice === 0 && order.totalAmount && order.items?.length) {
           const orderTotal = this.parsePrice(order.totalAmount);
           if (orderTotal > 0) {
@@ -125,7 +117,6 @@ export class OrderHistoryComponent implements OnInit {
           }
         }
         
-        // ✅ Find quantity with better handling
         const possibleQuantityFields = ['quantity', 'qty', 'count', 'units'];
         let foundQuantity = 1;
         
@@ -142,11 +133,10 @@ export class OrderHistoryComponent implements OnInit {
         
         const processedItem = {
           id: item.id || index,
-          productId: item.productId || 0, // ✅ FIX: Use correct property name
-          productName: item.productName || `Product ${index + 1}`, // ✅ FIX: Use correct property name
+          productId: item.productId || 0,
+          productName: item.productName || `Product ${index + 1}`,
           quantity: foundQuantity,
           pricePerUnit: foundPrice,
-          // ✅ Keep original data for debugging
           originalData: itemData
         };
         
@@ -166,8 +156,7 @@ export class OrderHistoryComponent implements OnInit {
     });
   }
 
-  // ✅ CAMBIAR: Métodos privados que usa el template a públicos
-  public getStatusText(status: string): string { // ✅ private -> public
+  public getStatusText(status: string): string {
     const statusTexts: { [key: string]: string } = {
       'PENDING': 'Pending',
       'PROCESSING': 'Processing', 
@@ -178,32 +167,28 @@ export class OrderHistoryComponent implements OnInit {
     return statusTexts[status] || status;
   }
 
-  public getItemQuantity(item: any): number { // ✅ private -> public
+  public getItemQuantity(item: any): number {
     return item.quantity || 1;
   }
 
-  public getItemPrice(item: any): number { // ✅ private -> public
+  public getItemPrice(item: any): number {
     return item.pricePerUnit || item.price || 0;
   }
 
-  // ✅ CAMBIAR: Todos los métodos que usa el template
-  public parsePrice(value: any): number { // ✅ private -> public
+  public parsePrice(value: any): number {
     console.log(`🔍 Parsing price:`, value, `(type: ${typeof value})`);
     
-    // ✅ Handle null, undefined, empty string
     if (value === null || value === undefined || value === '') {
       console.log(`🔍 Null/undefined/empty price, returning 0`);
       return 0;
     }
     
-    // ✅ If already a valid number
     if (typeof value === 'number' && !isNaN(value) && isFinite(value)) {
       const result = Math.max(0, value);
       console.log(`🔍 Valid number price: ${result}`);
       return result;
     }
     
-    // ✅ If string, clean and convert
     if (typeof value === 'string') {
       const cleanValue = value.trim().replace(/[$,\s€£¥]/g, '');
       if (cleanValue === '') {
@@ -221,7 +206,7 @@ export class OrderHistoryComponent implements OnInit {
     return 0;
   }
 
-  public parseQuantity(value: any): number { // ✅ private -> public
+  public parseQuantity(value: any): number {
     console.log(`🔍 Parsing quantity:`, value, `(type: ${typeof value})`);
     
     if (typeof value === 'number' && !isNaN(value) && isFinite(value)) {
@@ -242,7 +227,6 @@ export class OrderHistoryComponent implements OnInit {
  
 
 
-  // ✅ NUEVO: Calcular total del item de forma segura
   getItemTotal(item: any): number {
     const price = this.getItemPrice(item);
     const quantity = this.getItemQuantity(item);
@@ -258,7 +242,6 @@ export class OrderHistoryComponent implements OnInit {
 
  
 
-  // ✅ NUEVO: Buscar precio en cualquier campo del objeto
   private findPriceInObject(obj: any): number {
     const priceFields = [
       'pricePerUnit', 'price_per_unit', 'unitPrice', 'unit_price',
@@ -278,9 +261,7 @@ export class OrderHistoryComponent implements OnInit {
     return 0;
   }
 
-  // ✅ NUEVO: Obtener precio estimado basado en el order total
   private getEstimatedPrice(item: any): number {
-    // ✅ Buscar la order que contiene este item
     const parentOrder = this.orders.find(order => 
       order.items?.some(orderItem => 
         orderItem.id === item.id || orderItem.productId === item.productId
@@ -293,7 +274,6 @@ export class OrderHistoryComponent implements OnInit {
       return estimatedPrice;
     }
     
-    // ✅ Fallback: precio por defecto
     console.log(`🔍 Using fallback price: 0`);
     return 0;
   }
@@ -380,7 +360,6 @@ export class OrderHistoryComponent implements OnInit {
 
  
 
-  // ✅ ADD helper method to find quantity in any field
   private findQuantityInObject(obj: any): number {
     const quantityFields = [
       'quantity', 'qty', 'count', 'amount', 'units'
@@ -401,7 +380,6 @@ export class OrderHistoryComponent implements OnInit {
 
 
 
-  // ✅ NUEVO: Descargar comprobante
   downloadReceipt(orderId: number): void {
     this.loading = true;
     this.errorMessage = '';
@@ -420,7 +398,6 @@ export class OrderHistoryComponent implements OnInit {
 
   
 
-  // ✅ NUEVO: Ver comprobante en modal con mejor diseño
   async viewReceipt(orderId: number): Promise<void> {
     try {
       this.loading = true;

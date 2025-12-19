@@ -1,14 +1,14 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { RouterModule, Router } from '@angular/router'; // ✅ VERIFICAR que Router esté importado
+import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../auth.service';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule], // ✅ VERIFICAR RouterModule
+  imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css'
 })
@@ -16,11 +16,12 @@ export class RegisterComponent {
   registerForm: FormGroup;
   loading = false;
   errorMessage = '';
+  showPassword = false;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router // ✅ VERIFICAR que Router esté inyectado
+    private router: Router
   ) {
     this.registerForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.minLength(2)]],
@@ -71,7 +72,6 @@ export class RegisterComponent {
     }
   }
 
-  // ✅ AGREGAR: Método para navegar manualmente
   goToLogin(): void {
     this.router.navigate(['/auth/login']);
   }

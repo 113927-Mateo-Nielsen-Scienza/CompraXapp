@@ -142,13 +142,11 @@ export class UserProfileComponent implements OnInit {
     this.clearMessages();
   }
 
-  // ✅ MÉTODO para validar campos del formulario
   isFieldInvalid(fieldName: string): boolean {
     const field = this.profileForm.get(fieldName);
     return !!(field && field.invalid && (field.dirty || field.touched));
   }
 
-  // ✅ MÉTODO para obtener errores de campos
   getFieldError(fieldName: string): string {
     const field = this.profileForm.get(fieldName);
     if (field && field.errors && (field.dirty || field.touched)) {
@@ -165,7 +163,6 @@ export class UserProfileComponent implements OnInit {
     return '';
   }
 
-  // ✅ MÉTODO para marcar todos los campos como tocados
   private markFormGroupTouched(): void {
     Object.keys(this.profileForm.controls).forEach(key => {
       const control = this.profileForm.get(key);
@@ -173,13 +170,11 @@ export class UserProfileComponent implements OnInit {
     });
   }
 
-  // ✅ MÉTODO para limpiar mensajes
   private clearMessages(): void {
     this.errorMessage = '';
     this.successMessage = '';
   }
 
-  // ✅ MÉTODO para solicitar cambio de contraseña
   requestPasswordReset(): void {
     if (this.userProfile?.email) {
       this.authService.requestPasswordReset(this.userProfile.email).subscribe({
@@ -197,7 +192,6 @@ export class UserProfileComponent implements OnInit {
     }
   }
 
-  // ✅ MÉTODO para eliminar cuenta
   deleteAccount(): void {
     const confirmed = confirm(
       'Are you sure you want to delete your account? This action cannot be undone.'

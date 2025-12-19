@@ -32,13 +32,11 @@ export class AdminUsersComponent implements OnInit {
     this.isLoading = true;
     this.adminService.getAllUsers().subscribe({
       next: (users: UserDTO[]) => {
-        // ✅ FIX: Normalizar roles para asegurarnos de que sean arrays de strings
         this.users = users.map(user => ({
           ...user,
           roles: this.normalizeRoles(user.roles)
         }));
         this.isLoading = false;
-        console.log('✅ Users loaded:', this.users);
       },
       error: (err: any) => {
         this.errorMessage = 'Error loading users';
@@ -48,7 +46,6 @@ export class AdminUsersComponent implements OnInit {
     });
   }
 
-  // ✅ FIX: Normalizar roles independientemente del formato que venga del backend
   private normalizeRoles(roles: any): string[] {
     if (!roles) return [];
     
@@ -69,13 +66,11 @@ export class AdminUsersComponent implements OnInit {
     return [String(roles)]; // Si no es array, convertir a array de un elemento
   }
 
-  // ✅ FIX: Método seguro para formatear roles
   formatRole(role: any): string {
     const roleStr = typeof role === 'string' ? role : String(role);
     return roleStr.replace('ROLE_', '');
   }
 
-  // ✅ FIX: Método seguro para obtener clase CSS de rol
   getRoleClass(role: any): string {
     const roleStr = typeof role === 'string' ? role : String(role);
     const cleanRole = roleStr.toLowerCase().replace('role_', '');
@@ -86,7 +81,6 @@ export class AdminUsersComponent implements OnInit {
     this.adminService.updateUserRoles(user.id, newRoles).subscribe({
       next: () => {
         user.roles = newRoles;
-        console.log('✅ User roles updated successfully');
       },
       error: (err: any) => {
         console.error('❌ Error updating user roles:', err);
@@ -108,15 +102,31 @@ export class AdminUsersComponent implements OnInit {
     this.updateUserRoles(user, newRoles);
   }
 
-  deleteUser(user: UserDTO): void {
-    if (confirm(`Are you sure you want to delete user ${user.name}?`)) {
-      this.adminService.deleteUser(user.id).subscribe({
-        next: () => {
-          this.users = this.users.filter(u => u.id !== user.id);
-          console.log('✅ User deleted successfully');
+  toggleUserStatus(user: UserDTO): void {
+    const action = user.active ? 'deactivate' : 'activate';
+    if (confirm(`Are you sure you want to ${action} user ${user.name}?`)) {
+      this.adminService.toggleUserStatus(user.id).subscribe({
+        next: (response) => {
+          user.active = response.active;
+          console.log(`✅ User ${action}d successfully`);
         },
         error: (err: any) => {
-          console.error('❌ Error deleting user:', err);
+          console.error(`❌ Error ${action}ing user:`, err);
+          alert(err.error?.error || `Failed to ${action} user`);
+        }
+      });
+    }
+  }
+
+  deleteUser(user: UserDTO): void {
+    if (confirm(`Are you sure you want to deactivate user ${user.name}?`)) {
+      this.adminService.deleteUser(user.id).subscribe({
+        next: () => {
+          user.active = false; // Actualizar estado local en lugar de eliminar
+          console.log('✅ User deactivated successfully');
+        },
+        error: (err: any) => {
+          console.error('❌ Error deactivating user:', err);
         }
       });
     }
