@@ -64,7 +64,7 @@ public class SecurityConfig {
                 .requestMatchers("/swagger-ui.html").permitAll()
                 .requestMatchers("/webjars/**").permitAll()
                 
-                // Todo lo demás requiere autenticación
+              
                 .anyRequest().authenticated()
             );
 
